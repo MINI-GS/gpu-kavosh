@@ -27,7 +27,8 @@ __host__ __device__ void Enumerate(
 	bool* chosenInTree,
 	bool* visitedInCurrentSearch,
 	bool** graph,
-	int graphSize);
+	int graphSize,
+	int* counter);
 
 __host__ __device__ void RevolveR(
 	int n,
@@ -42,7 +43,99 @@ __host__ __device__ void RevolveR(
 	bool* chosenInTree,
 	bool* visitedInCurrentSearch,
 	bool** graph,
-	int graphSize);
+	int graphSize,
+	int* counter);
+
+/*
+__host__ __device__ void Vertical(
+		int* arrH,
+		int* arrV,
+		int arrLen,
+		int level
+		)
+{
+	if(level == arrLen)
+	{
+		for(int i = 0; i < arrLen; ++i)
+		{
+			printf("%d,", arrH[i]);
+		}
+		printf("\n");
+		for(int i = 0; i < arrLen; ++i)
+		{
+			printf("%d,", arrV[i]);
+		}
+
+		printf("\n");
+		printf("\n");
+		return;
+	}
+	for(int i = level; i < arrLen; ++i)
+	{
+		int tmp = arrV[level];
+		arrV[level] = arrV[i];
+		arrV[i] = tmp;
+		Vertical(arrH, arrV, arrLen, level + 1);
+		tmp = arrV[level];
+		arrV[level] = arrV[i];
+		arrV[i] = tmp;
+	}
+}*/
+
+__host__ __device__ void Smallest(
+	int* arrH,
+	int arrLen,
+	bool* subgraph,
+	uint* largest
+)
+{
+	uint val = 0;
+	int iter = 0;
+
+	for (int i = 0; i < arrLen; ++i)
+	{
+		int currRow = arrH[i];
+		for (int j = 0; j < arrLen; ++j)
+		{
+			int currCol = arrH[j];
+			if (subgraph[8 * currRow + currCol])
+			{
+				val += (1 << iter);
+			}
+			++iter;
+		}
+	}
+
+	if (val > * largest) *largest = val;
+}
+
+__host__ __device__ void Horisontal(
+	int* arrH,
+	int* arrV,
+	int arrLen,
+	int level,
+	bool* subgraph,
+	uint* largest
+)
+{
+	if (level == arrLen)
+	{
+		//Vertical(arrH, arrV, arrLen, 0);
+		Smallest(arrH, arrLen, subgraph, largest);
+		return;
+	}
+	for (int i = level; i < arrLen; ++i)
+	{
+		int tmp = arrH[level];
+		arrH[level] = arrH[i];
+		arrH[i] = tmp;
+		Horisontal(arrH, arrV, arrLen, level + 1, subgraph, largest);
+		tmp = arrH[level];
+		arrH[level] = arrH[i];
+		arrH[i] = tmp;
+	}
+}
+
 
 __host__ __device__ void Revolve(
 	int n,
@@ -57,7 +150,9 @@ __host__ __device__ void Revolve(
 	bool* chosenInTree,
 	bool* visitedInCurrentSearch,
 	bool** graph,
-	int graphSize)
+	int graphSize,
+	int* counter
+)
 {
 	int* tab = searchTree[level];
 
@@ -77,7 +172,8 @@ __host__ __device__ void Revolve(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 
 	}
 	else if (n == right - left)
@@ -96,7 +192,8 @@ __host__ __device__ void Revolve(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 
 		for (int i = left; i < right; ++i)
 		{
@@ -115,7 +212,8 @@ __host__ __device__ void Revolve(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 
 		chosenInTree[tab[left]] = true;
 		RevolveR(n - 1, left + 1, right,
@@ -127,7 +225,8 @@ __host__ __device__ void Revolve(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 
 
 		chosenInTree[tab[left]] = false;
@@ -147,7 +246,8 @@ __host__ __device__ void RevolveR(
 	bool* chosenInTree,
 	bool* visitedInCurrentSearch,
 	bool** graph,
-	int graphSize)
+	int graphSize,
+	int* counter)
 {
 	int* tab = searchTree[level];
 
@@ -167,7 +267,8 @@ __host__ __device__ void RevolveR(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 	}
 	else if (n == right - left)
 	{
@@ -185,7 +286,8 @@ __host__ __device__ void RevolveR(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 
 		for (int i = left; i < right; ++i)
 		{
@@ -204,7 +306,8 @@ __host__ __device__ void RevolveR(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 
 		chosenInTree[tab[right - 1]] = true;
 		Revolve(n - 1, left, right - 1,
@@ -216,7 +319,8 @@ __host__ __device__ void RevolveR(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 
 
 		chosenInTree[tab[right - 1]] = false;
@@ -264,10 +368,46 @@ __host__ __device__ void Enumerate(
 	bool* chosenInTree,
 	bool* visitedInCurrentSearch,
 	bool** graph,
-	int graphSize)
+	int graphSize,
+	int* counter)
 {
 	if (remaining == 0)
 	{
+		int arrH[8];
+		int arrV[8];
+
+		for (int i = 0; i < 8; ++i)
+		{
+			arrH[i] = arrV[i] = i;
+		}
+		bool subgraph[64];
+		for (int i = 0; i < 64; ++i) subgraph[i] = false;
+
+		int chosenVerts[8];
+		int iter = 0;
+		for (int i = 0; i < graphSize; ++i)
+		{
+			if (chosenInTree[i]) chosenVerts[iter++] = i;
+		}
+
+		for (int i = 0; i < subgraphSize; ++i)
+		{
+			int vert = chosenVerts[i];
+			for (int j = 0; j < subgraphSize; ++j)
+			{
+				int vert2 = chosenVerts[j];
+				if (vert2 == vert) continue;
+				if (graph[vert][vert2])
+				{
+					subgraph[8 * i + j] = true;
+				}
+
+			}
+		}
+		uint largest = 0;
+		Horisontal(arrH, arrV, subgraphSize, 0, subgraph, &largest);
+		++counter[largest];
+
 #ifdef DEBUG
 
 #ifdef LEVELS
@@ -320,7 +460,8 @@ __host__ __device__ void Enumerate(
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
-			graphSize);
+			graphSize,
+			counter);
 	}
 
 	for (int i = 1; i <= searchTree[level][0]; ++i)
@@ -385,7 +526,11 @@ int main(int argc, char** argv)
 	graph[6][1] = true;
 
 	int graphSize = 7;
-
+	int counter[131071];
+	for (int i = 0; i < 131071; ++i)
+	{
+		counter[i] = 0;
+	}
 	Enumerate(
 		root,
 		level,
@@ -395,8 +540,24 @@ int main(int argc, char** argv)
 		chosenInTree,
 		visitedInCurrentSearch,
 		graph,
-		graphSize);
+		graphSize,
+		counter);
 
-	printf("HELLO");
+	for (uint i = 0; i < 131071; ++i)
+	{
+		if (counter[i] != 0)
+		{
+			printf("\n%d %d", i, counter[i]);
+			for (int a = 0; a < 16; ++a)
+			{
+				if (a % 4 == 0) printf("\n");
+				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
+			}
+		}
+	}
+
+
+
+	printf("\nHELLO");
 }
 
