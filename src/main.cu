@@ -495,19 +495,27 @@ int main(int argc, char** argv)
 	for (int i = 0; i < 5; ++i)
 	{
 		searchTree[i] = new int[2000];
+		for (int j = 0; j < 2000; j++)
+			searchTree[i][j] = 0;
 	}
 
 	searchTree[0][0] = 1;
 	searchTree[0][1] = root;
 
 	bool* chosenInTree = new bool[2000];
+	for (int i = 0; i < 2000; i++)
+		chosenInTree[i] = 0;
 	chosenInTree[root] = true;
 	bool* visitedInCurrentSearch = new bool[2000];
+	for (int i = 0; i < 2000; i++)
+		visitedInCurrentSearch[i] = 0;
 	bool** graph = new bool* [7];
 
 	for (int i = 0; i < 7; ++i)
 	{
 		graph[i] = new bool[7];
+		for (int j = 0; j < 7; j++)
+			graph[i][j] = 0;
 	}
 
 	graph[0][1] = true;
