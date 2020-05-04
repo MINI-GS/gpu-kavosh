@@ -108,7 +108,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <CudaCompile Include="labeling.cu" />
     <CudaCompile Include="src\main.cu" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="labeling.cuh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
