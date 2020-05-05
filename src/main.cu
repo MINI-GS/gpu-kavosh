@@ -18,15 +18,19 @@
 
 #define DEBUG
 
+#define GRAPH_IDX(i,j) ((i)*graphSize + (j))
+#define SEARCH_IDX(i,j) ((i)*searchTreeSize + (j))
+
 __host__ __device__ void Enumerate(
 		int root,
 		int level,
 		int remaining,
 		int subgraphSize,
-		int** searchTree,
+		int* searchTree,
+		int searchTreeSize,
 		bool* chosenInTree,
 		bool* visitedInCurrentSearch,
-		bool** graph,
+		bool* graph,
 		int graphSize,
 		int* counter);
 
@@ -39,48 +43,13 @@ __host__ __device__ void RevolveR(
 		int level,
 		int remaining,
 		int subgraphSize,
-		int** searchTree,
+		int* searchTree,
+		int searchTreeSize,
 		bool* chosenInTree,
 		bool* visitedInCurrentSearch,
-		bool** graph,
+		bool* graph,
 		int graphSize,
 		int* counter);
-
-/*
-__host__ __device__ void Vertical(
-		int* arrH,
-		int* arrV,
-		int arrLen,
-		int level
-		)
-{
-	if(level == arrLen)
-	{
-		for(int i = 0; i < arrLen; ++i)
-		{
-			printf("%d,", arrH[i]);
-		}
-		printf("\n");
-		for(int i = 0; i < arrLen; ++i)
-		{
-			printf("%d,", arrV[i]);
-		}
-
-		printf("\n");
-		printf("\n");
-		return;
-	}
-	for(int i = level; i < arrLen; ++i)
-	{
-		int tmp = arrV[level];
-		arrV[level] = arrV[i];
-		arrV[i] = tmp;
-		Vertical(arrH, arrV, arrLen, level + 1);
-		tmp = arrV[level];
-		arrV[level] = arrV[i];
-		arrV[i] = tmp;
-	}
-}*/
 
 __host__ __device__ void Smallest(
 		int* arrH,
@@ -146,15 +115,16 @@ __host__ __device__ void Revolve(
 		int level,
 		int remaining,
 		int subgraphSize,
-		int** searchTree,
+		int* searchTree,
+		int searchTreeSize,
 		bool* chosenInTree,
 		bool* visitedInCurrentSearch,
-		bool** graph,
+		bool* graph,
 		int graphSize,
 		int* counter
 		)
 {
-	int* tab = searchTree[level];
+	int* tab = searchTree + (level*searchTreeSize);
 
 	if(n == 0)
 	{
@@ -169,6 +139,7 @@ __host__ __device__ void Revolve(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -189,6 +160,7 @@ __host__ __device__ void Revolve(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -209,6 +181,7 @@ __host__ __device__ void Revolve(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -222,6 +195,7 @@ __host__ __device__ void Revolve(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -242,14 +216,15 @@ __host__ __device__ void RevolveR(
 		int level,
 		int remaining,
 		int subgraphSize,
-		int** searchTree,
+		int* searchTree,
+		int searchTreeSize,
 		bool* chosenInTree,
 		bool* visitedInCurrentSearch,
-		bool** graph,
+		bool* graph,
 		int graphSize,
 		int* counter)
 {
-	int* tab = searchTree[level];
+	int* tab = searchTree + (level*searchTreeSize);
 
 	if(n == 0)
 	{
@@ -264,6 +239,7 @@ __host__ __device__ void RevolveR(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -283,6 +259,7 @@ __host__ __device__ void RevolveR(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -303,6 +280,7 @@ __host__ __device__ void RevolveR(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -316,6 +294,7 @@ __host__ __device__ void RevolveR(
 				remaining,
 				subgraphSize,
 				searchTree,
+				searchTreeSize,
 				chosenInTree,
 				visitedInCurrentSearch,
 				graph,
@@ -330,27 +309,29 @@ __host__ __device__ void RevolveR(
 __host__ __device__ void InitChildSet(
 		int root,
 		int level,
-		int** searchTree,
+		int* searchTree,
+		int searchTreeSize,
 		bool* chosenInTree,
 		bool* visitedInCurrentSearch,
-		bool** graph,
+		bool* graph,
 		int graphSize)
 {
-	searchTree[level][0] = 0;
-	for(int i = 1; i <= searchTree[level-1][0]; ++i)
+	searchTree[SEARCH_IDX(level,0)] = 0;
+	for(int i = 1; i <= searchTree[SEARCH_IDX(level-1,0)]; ++i)
 	{
-		if(chosenInTree[searchTree[level-1][i]])
+		if(chosenInTree[searchTree[SEARCH_IDX(level-1,i)]])
 		{
-			int parent = searchTree[level-1][i];
+			int parent = searchTree[SEARCH_IDX(level-1,i)];
 
 			for(int a = root + 1; a < graphSize; ++a)
 			{
 				if(!visitedInCurrentSearch[a] && a != parent)
 				{
-					if(graph[parent][a] || graph[a][parent])
+					if(graph[GRAPH_IDX(parent,a)] || graph[GRAPH_IDX(a,parent)])
 					{
 						//printf("ADDING %d child of %d \n", a, parent);
-						searchTree[level][++searchTree[level][0]] = a;
+						int ind = ++searchTree[SEARCH_IDX(level,0)];
+						searchTree[SEARCH_IDX(level,ind)] = a;
 						visitedInCurrentSearch[a] = true;
 					}
 				}
@@ -364,10 +345,11 @@ __host__ __device__ void Enumerate(
 		int level,
 		int remaining,
 		int subgraphSize,
-		int** searchTree,
+		int* searchTree,
+		int searchTreeSize,
 		bool* chosenInTree,
 		bool* visitedInCurrentSearch,
-		bool** graph,
+		bool* graph,
 		int graphSize,
 		int* counter)
 {
@@ -397,7 +379,7 @@ __host__ __device__ void Enumerate(
 			{
 				int vert2 = chosenVerts[j];
 				if (vert2 == vert) continue;
-				if(graph[vert][vert2])
+				if(graph[GRAPH_IDX(vert,vert2)])
 				{
 					subgraph[8 * i + j] = true;
 				}
@@ -413,10 +395,10 @@ __host__ __device__ void Enumerate(
 #ifdef LEVELS
 	for(int lvl = 0; lvl < level; ++lvl)
 	{
-	printf("%d LEVEL %d:\t",searchTree[lvl][0], lvl);
-	for(int i = 1; i <= searchTree[lvl][0]; ++i)
+	printf("%d LEVEL %d:\t",searchTree[SEARCH_IDX(lvl,0)], lvl);
+	for(int i = 1; i <= searchTree[SEARCH_IDX(lvl,0)]; ++i)
 	{
-		printf("%d", searchTree[lvl][i] + 1);
+		printf("%d", searchTree[SEARCH_IDX(lvl,i)] + 1);
 	}
 	printf("\n");
 	}
@@ -431,19 +413,31 @@ __host__ __device__ void Enumerate(
 		return;
 	}
 
+
 	InitChildSet(
 			root,
 			level,
 			searchTree,
+			searchTreeSize,
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
 			graphSize);
 
+	for(int lvl = 0; lvl < level; ++lvl)
+	{
+	printf("%d LEVEL %d:\t",searchTree[SEARCH_IDX(lvl,0)], lvl);
+	for(int i = 1; i <= searchTree[SEARCH_IDX(lvl,0)]; ++i)
+	{
+		printf("%d", searchTree[SEARCH_IDX(lvl,i)] + 1);
+	}
+	printf("\n");
+	}
+
 
 	for(int k = 1; k <= remaining; ++k)
 	{
-		if(searchTree[level][0] < k)
+		if(searchTree[SEARCH_IDX(level,0)] < k)
 		{
 			return;
 		}
@@ -451,12 +445,13 @@ __host__ __device__ void Enumerate(
 		Revolve(
 			k,
 			1,
-			searchTree[level][0] + 1,
+			searchTree[SEARCH_IDX(level,0)] + 1,
 			root,
 			level,
 			remaining - k,
 			subgraphSize,
 			searchTree,
+			searchTreeSize,
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
@@ -464,9 +459,9 @@ __host__ __device__ void Enumerate(
 			counter);
 	}
 
-	for(int i = 1; i <= searchTree[level][0]; ++i)
+	for(int i = 1; i <= searchTree[SEARCH_IDX(level,0)]; ++i)
 	{
-		visitedInCurrentSearch[searchTree[level][i]] = false;
+		visitedInCurrentSearch[searchTree[SEARCH_IDX(level,i)]] = false;
 	}
 
 
@@ -488,44 +483,36 @@ int main(int argc, char ** argv)
 {
 	int root = 0;
 	int level = 1;
+	int searchTreeSize = 10;
 	int remaring = 3;
 	int subgraphSize = 4;
-	int** searchTree = new int*[5];
+	int* searchTree = new int[2000];
 
-	for(int i = 0; i < 5; ++i)
-	{
-		searchTree[i] = new int[2000];
-	}
-
-	searchTree[0][0] = 1;
-	searchTree[0][1] = root;
+	searchTree[0] = 1;
+	searchTree[1] = root;
 
 	bool* chosenInTree = new bool[2000];
 	chosenInTree[root] = true;
 	bool* visitedInCurrentSearch = new bool[2000];
-	bool** graph = new bool*[7];
-
-	for(int i = 0; i < 7; ++i)
-	{
-		graph[i] = new bool[7];
-	}
-
-	graph[0][1] = true;
-	graph[0][2] = true;
-	graph[1][5] = true;
-	graph[2][6] = true;
-	graph[2][4] = true;
-	graph[2][5] = true;
-	graph[3][2] = true;
-	graph[4][3] = true;
-	graph[4][5] = true;
-	graph[4][2] = true;
-	graph[4][0] = true;
-	graph[5][6] = true;
-	graph[5][3] = true;
-	graph[6][1] = true;
+	bool* graph = new bool[49];
 
 	int graphSize = 7;
+
+	graph[GRAPH_IDX(0,1)] = true;
+	graph[GRAPH_IDX(0,2)] = true;
+	graph[GRAPH_IDX(1,5)] = true;
+	graph[GRAPH_IDX(2,6)] = true;
+	graph[GRAPH_IDX(2,4)] = true;
+	graph[GRAPH_IDX(2,5)] = true;
+	graph[GRAPH_IDX(3,2)] = true;
+	graph[GRAPH_IDX(4,3)] = true;
+	graph[GRAPH_IDX(4,5)] = true;
+	graph[GRAPH_IDX(4,2)] = true;
+	graph[GRAPH_IDX(4,0)] = true;
+	graph[GRAPH_IDX(5,6)] = true;
+	graph[GRAPH_IDX(5,3)] = true;
+	graph[GRAPH_IDX(6,1)] = true;
+
 	int counter[131071];
 	for(int i = 0; i<131071; ++i)
 	{
@@ -537,6 +524,7 @@ int main(int argc, char ** argv)
 			remaring,
 			subgraphSize,
 			searchTree,
+			searchTreeSize,
 			chosenInTree,
 			visitedInCurrentSearch,
 			graph,
