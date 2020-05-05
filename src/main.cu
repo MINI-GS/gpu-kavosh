@@ -49,7 +49,8 @@ __host__ __device__ void RevolveR(
 		bool* visitedInCurrentSearch,
 		bool* graph,
 		int graphSize,
-		int* counter);
+		int* counter
+		);
 
 __host__ __device__ void Smallest(
 		int* arrH,
@@ -89,7 +90,6 @@ __host__ __device__ void Horisontal(
 {
 	if(level == arrLen)
 	{
-		//Vertical(arrH, arrV, arrLen, 0);
 		Smallest(arrH, arrLen, subgraph, largest);
 		return;
 	}
@@ -222,7 +222,8 @@ __host__ __device__ void RevolveR(
 		bool* visitedInCurrentSearch,
 		bool* graph,
 		int graphSize,
-		int* counter)
+		int* counter
+		)
 {
 	int* tab = searchTree + (level*searchTreeSize);
 
@@ -329,7 +330,6 @@ __host__ __device__ void InitChildSet(
 				{
 					if(graph[GRAPH_IDX(parent,a)] || graph[GRAPH_IDX(a,parent)])
 					{
-						//printf("ADDING %d child of %d \n", a, parent);
 						int ind = ++searchTree[SEARCH_IDX(level,0)];
 						searchTree[SEARCH_IDX(level,ind)] = a;
 						visitedInCurrentSearch[a] = true;
@@ -386,30 +386,8 @@ __host__ __device__ void Enumerate(
 
 			}
 		}
-		uint largest = 0;
-		Horisontal(arrH, arrV, subgraphSize, 0, subgraph, &largest);
-		++counter[largest];
 
-#ifdef DEBUG
 
-#ifdef LEVELS
-	for(int lvl = 0; lvl < level; ++lvl)
-	{
-	printf("%d LEVEL %d:\t",searchTree[SEARCH_IDX(lvl,0)], lvl);
-	for(int i = 1; i <= searchTree[SEARCH_IDX(lvl,0)]; ++i)
-	{
-		printf("%d", searchTree[SEARCH_IDX(lvl,i)] + 1);
-	}
-	printf("\n");
-	}
-#endif
-		printf("SUBGRAP:\t");
-		for(int i = 0; i < graphSize; ++ i)
-		{
-			if(chosenInTree[i]) printf("%d", i + 1);
-		}
-		printf("\n");
-#endif
 		return;
 	}
 
@@ -423,17 +401,6 @@ __host__ __device__ void Enumerate(
 			visitedInCurrentSearch,
 			graph,
 			graphSize);
-
-	for(int lvl = 0; lvl < level; ++lvl)
-	{
-	printf("%d LEVEL %d:\t",searchTree[SEARCH_IDX(lvl,0)], lvl);
-	for(int i = 1; i <= searchTree[SEARCH_IDX(lvl,0)]; ++i)
-	{
-		printf("%d", searchTree[SEARCH_IDX(lvl,i)] + 1);
-	}
-	printf("\n");
-	}
-
 
 	for(int k = 1; k <= remaining; ++k)
 	{
@@ -467,33 +434,64 @@ __host__ __device__ void Enumerate(
 
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/*
- * 		int root,
-		int level,
-		int remaining,
+__global__ void EnumerateGPU(
 		int subgraphSize,
-		int** searchTree,
+		int* searchTree,
+		int searchTreeSize,
 		bool* chosenInTree,
 		bool* visitedInCurrentSearch,
-		bool** graph,
-		int graphSize)
- */
+		bool* graph,
+		int graphSize,
+		int* counter
+		)
+{
+	uint tid = blockIdx.x * blockDim.x + threadIdx.x;
+
+	if(tid < graphSize)
+	{
+		int * searchTreeRoot = searchTree + (tid * searchTreeSize * subgraphSize);
+		bool* chosenInTreeRoot = chosenInTree + tid * graphSize;
+		bool* visitedInCurrentSearchRoot = visitedInCurrentSearch + tid * graphSize;
+		searchTreeRoot[0] = 1;
+		searchTreeRoot[1] = tid;
+		chosenInTreeRoot[tid] = true;
+		visitedInCurrentSearchRoot[tid] = true;
+
+		Enumerate(
+			tid,
+			1,
+			subgraphSize - 1,
+			subgraphSize,
+			searchTreeRoot,
+			searchTreeSize,
+			chosenInTreeRoot,
+			visitedInCurrentSearchRoot,
+			graph,
+			graphSize,
+			counter);
+		__syncthreads();
+	}
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char ** argv)
 {
-	int root = 0;
-	int level = 1;
 	int searchTreeSize = 10;
-	int remaring = 3;
 	int subgraphSize = 4;
-	int* searchTree = new int[2000];
 
-	searchTree[0] = 1;
-	searchTree[1] = root;
+	int* searchTree_d;
+	checkCudaErrors(cudaMalloc((void**)&searchTree_d,  20000 * sizeof(int)));
+	checkCudaErrors(cudaMemset(searchTree_d, 0, 20000 * sizeof(int)));
 
-	bool* chosenInTree = new bool[2000];
-	chosenInTree[root] = true;
-	bool* visitedInCurrentSearch = new bool[2000];
+	bool* chosenInTree_d;
+	checkCudaErrors(cudaMalloc((void**)&chosenInTree_d,  2000 * sizeof(bool)));
+	checkCudaErrors(cudaMemset(chosenInTree_d, 0, 2000 * sizeof(bool)));
+
+	bool* visitedInCurrentSearch_d;
+	checkCudaErrors(cudaMalloc((void**)&visitedInCurrentSearch_d,  2000 * sizeof(bool)));
+	checkCudaErrors(cudaMemset(visitedInCurrentSearch_d, 0, 2000 * sizeof(bool)));
+
 	bool* graph = new bool[49];
 
 	int graphSize = 7;
@@ -513,23 +511,38 @@ int main(int argc, char ** argv)
 	graph[GRAPH_IDX(5,3)] = true;
 	graph[GRAPH_IDX(6,1)] = true;
 
-	int counter[131071];
-	for(int i = 0; i<131071; ++i)
-	{
-		counter[i] = 0;
-	}
-	Enumerate(
-			root,
-			level,
-			remaring,
+	bool* graph_d;
+	checkCudaErrors(cudaMalloc((void**)&graph_d,  graphSize * sizeof(bool)));
+	checkCudaErrors(cudaMemcpy(graph_d, graph , graphSize * sizeof(bool), cudaMemcpyHostToDevice));
+
+	int* counter = new int[131071];
+
+	int* counter_d;
+	checkCudaErrors(cudaMalloc((void**)&counter_d,  131071 * sizeof(int)));
+	checkCudaErrors(cudaMemset(counter_d, 0, 131071 * sizeof(int)));
+
+	uint* largest_d;
+	checkCudaErrors(cudaMalloc((void**)&largest_d,  128 * sizeof(uint)));
+
+	EnumerateGPU<<<1,1>>>(
 			subgraphSize,
-			searchTree,
+			searchTree_d,
 			searchTreeSize,
-			chosenInTree,
-			visitedInCurrentSearch,
-			graph,
+			chosenInTree_d,
+			visitedInCurrentSearch_d,
+			graph_d,
 			graphSize,
-			counter);
+			counter_d);
+
+	cudaDeviceSynchronize();
+	cudaError_t code = cudaGetLastError();
+	if (code != cudaSuccess)
+	{
+		fprintf(stderr, "kernelAssert: %s\n", cudaGetErrorString(code));
+		if (abort) exit(code);
+	}
+
+	checkCudaErrors(cudaMemcpy((void*)(counter), (void*)counter_d, 131071*sizeof(int), cudaMemcpyDeviceToHost));
 
 	for(uint i = 0; i<131071; ++i)
 	{
