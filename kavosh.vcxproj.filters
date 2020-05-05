@@ -9,16 +9,16 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="labeling.cuh">
-      <Filter>header</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <CudaCompile Include="src\main.cu">
       <Filter>source</Filter>
     </CudaCompile>
-    <CudaCompile Include="labeling.cu">
+    <CudaCompile Include="src\labeling.cu">
       <Filter>source</Filter>
     </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\labeling.cuh">
+      <Filter>header</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

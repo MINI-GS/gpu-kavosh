@@ -15,6 +15,5 @@
 
 
 
-__host__ __device__ void Label(
-	bool** graph);
+__host__ __device__ void Label(bool* graph, int n, bool* label);
 

@@ -1,3 +1,5 @@
+#include "labeling.cuh"
+
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
@@ -12,6 +14,7 @@
 #include <cuda_profiler_api.h>
 #include <helper_cuda.h>
 #include <helper_functions.h>
+
 
 #define uint unsigned int
 #define ull unsigned long long
@@ -82,59 +85,6 @@ __host__ __device__ void Vertical(
 	}
 }*/
 
-__host__ __device__ void Smallest(
-	int* arrH,
-	int arrLen,
-	bool* subgraph,
-	uint* largest
-)
-{
-	uint val = 0;
-	int iter = 0;
-
-	for (int i = 0; i < arrLen; ++i)
-	{
-		int currRow = arrH[i];
-		for (int j = 0; j < arrLen; ++j)
-		{
-			int currCol = arrH[j];
-			if (subgraph[8 * currRow + currCol])
-			{
-				val += (1 << iter);
-			}
-			++iter;
-		}
-	}
-
-	if (val > * largest) *largest = val;
-}
-
-__host__ __device__ void Horisontal(
-	int* arrH,
-	int* arrV,
-	int arrLen,
-	int level,
-	bool* subgraph,
-	uint* largest
-)
-{
-	if (level == arrLen)
-	{
-		//Vertical(arrH, arrV, arrLen, 0);
-		Smallest(arrH, arrLen, subgraph, largest);
-		return;
-	}
-	for (int i = level; i < arrLen; ++i)
-	{
-		int tmp = arrH[level];
-		arrH[level] = arrH[i];
-		arrH[i] = tmp;
-		Horisontal(arrH, arrV, arrLen, level + 1, subgraph, largest);
-		tmp = arrH[level];
-		arrH[level] = arrH[i];
-		arrH[i] = tmp;
-	}
-}
 
 
 __host__ __device__ void Revolve(
@@ -382,6 +332,8 @@ __host__ __device__ void Enumerate(
 		}
 		bool subgraph[64];
 		for (int i = 0; i < 64; ++i) subgraph[i] = false;
+		bool label[64];
+		for (int i = 0; i < 64; ++i) label[i] = false;
 
 		int chosenVerts[8];
 		int iter = 0;
@@ -405,7 +357,11 @@ __host__ __device__ void Enumerate(
 			}
 		}
 		uint largest = 0;
-		Horisontal(arrH, arrV, subgraphSize, 0, subgraph, &largest);
+		Label(subgraph, 4, label);
+		for (int i = 0; i < 64; i++)
+			if (label[i])
+				largest += 1 << ((i/8)*4+i%8);
+		//Horisontal(arrH, arrV, subgraphSize, 0, subgraph, &largest);
 		++counter[largest];
 
 #ifdef DEBUG
@@ -468,8 +424,6 @@ __host__ __device__ void Enumerate(
 	{
 		visitedInCurrentSearch[searchTree[level][i]] = false;
 	}
-
-
 }
 
 ////////////////////////////////////////////////////////////////////////////////
