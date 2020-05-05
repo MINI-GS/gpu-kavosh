@@ -1,5 +1,3 @@
-#include "labeling.cuh"
-
 #include <stdio.h>
 #include <string.h>
 #include <iostream>
@@ -14,6 +12,10 @@
 #include <cuda_profiler_api.h>
 #include <helper_cuda.h>
 #include <helper_functions.h>
+
+#include "config.h"
+#include "labeling.cuh"
+#include "loader.h"
 
 
 #define uint unsigned int
@@ -323,19 +325,19 @@ __host__ __device__ void Enumerate(
 {
 	if (remaining == 0)
 	{
-		int arrH[8];
-		int arrV[8];
+		int arrH[MAX_SUBGRAPH_SIZE];
+		int arrV[MAX_SUBGRAPH_SIZE];
 
 		for (int i = 0; i < 8; ++i)
 		{
 			arrH[i] = arrV[i] = i;
 		}
-		bool subgraph[64];
-		for (int i = 0; i < 64; ++i) subgraph[i] = false;
-		bool label[64];
-		for (int i = 0; i < 64; ++i) label[i] = false;
+		bool subgraph[MAX_SUBGRAPH_SIZE_SQUARED];
+		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; ++i) subgraph[i] = false;
+		bool label[MAX_SUBGRAPH_SIZE_SQUARED];
+		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; ++i) label[i] = false;
 
-		int chosenVerts[8];
+		int chosenVerts[MAX_SUBGRAPH_SIZE];
 		int iter = 0;
 		for (int i = 0; i < graphSize; ++i)
 		{
@@ -351,16 +353,16 @@ __host__ __device__ void Enumerate(
 				if (vert2 == vert) continue;
 				if (graph[vert][vert2])
 				{
-					subgraph[8 * i + j] = true;
+					subgraph[MAX_SUBGRAPH_SIZE * i + j] = true;
 				}
 
 			}
 		}
 		uint largest = 0;
-		Label(subgraph, 4, label);
-		for (int i = 0; i < 64; i++)
+		Label(subgraph, SUBGRAPH_SIZE, label);
+		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
-				largest += 1 << ((i/8)*4+i%8);
+				largest += 1 << ((i/ MAX_SUBGRAPH_SIZE)* SUBGRAPH_SIZE+i% MAX_SUBGRAPH_SIZE);
 		//Horisontal(arrH, arrV, subgraphSize, 0, subgraph, &largest);
 		++counter[largest];
 
@@ -440,15 +442,18 @@ __host__ __device__ void Enumerate(
  */
 int main(int argc, char** argv)
 {
-	int root = 0;
+	int n = 0;
+	
+	bool** g = Load(&n, "data/allActors.csv", "data/allActorsRelation.csv");
+	/*int root = 0;
 	int level = 1;
 	int remaring = 3;
-	int subgraphSize = 4;
+	int subgraphSize = SUBGRAPH_SIZE;
 	int** searchTree = new int* [5];
 
 	for (int i = 0; i < 5; ++i)
 	{
-		searchTree[i] = new int[2000];
+		searchTree[i] = new int[SEARCH_TREE_SIZE];
 		for (int j = 0; j < 2000; j++)
 			searchTree[i][j] = 0;
 	}
@@ -456,12 +461,12 @@ int main(int argc, char** argv)
 	searchTree[0][0] = 1;
 	searchTree[0][1] = root;
 
-	bool* chosenInTree = new bool[2000];
-	for (int i = 0; i < 2000; i++)
+	bool* chosenInTree = new bool[SEARCH_TREE_SIZE];
+	for (int i = 0; i < SEARCH_TREE_SIZE; i++)
 		chosenInTree[i] = 0;
 	chosenInTree[root] = true;
-	bool* visitedInCurrentSearch = new bool[2000];
-	for (int i = 0; i < 2000; i++)
+	bool* visitedInCurrentSearch = new bool[SEARCH_TREE_SIZE];
+	for (int i = 0; i < SEARCH_TREE_SIZE; i++)
 		visitedInCurrentSearch[i] = 0;
 	bool** graph = new bool* [7];
 
@@ -518,8 +523,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-
-
-	printf("\nHELLO");
+	printf("\nHELLO");*/
 }
 

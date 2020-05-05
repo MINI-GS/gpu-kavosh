@@ -20,5 +20,16 @@
     <ClInclude Include="src\labeling.cuh">
       <Filter>header</Filter>
     </ClInclude>
+    <ClInclude Include="src\config.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\loader.h">
+      <Filter>header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\loader.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

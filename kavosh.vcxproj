@@ -118,7 +118,12 @@
     <CudaCompile Include="src\main.cu" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\config.h" />
     <ClInclude Include="src\labeling.cuh" />
+    <ClInclude Include="src\loader.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\loader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
