@@ -21,7 +21,7 @@
 #define uint unsigned int
 #define ull unsigned long long
 
-#define DEBUG
+//#define DEBUG
 
 __host__ __device__ void Enumerate(
 	int root,
@@ -442,10 +442,7 @@ __host__ __device__ void Enumerate(
  */
 int main(int argc, char** argv)
 {
-	int n = 0;
-	
-	bool** g = Load(&n, "data/allActors.csv", "data/allActorsRelation.csv");
-	/*int root = 0;
+	int root = 0;
 	int level = 1;
 	int remaring = 3;
 	int subgraphSize = SUBGRAPH_SIZE;
@@ -454,7 +451,7 @@ int main(int argc, char** argv)
 	for (int i = 0; i < 5; ++i)
 	{
 		searchTree[i] = new int[SEARCH_TREE_SIZE];
-		for (int j = 0; j < 2000; j++)
+		for (int j = 0; j < SEARCH_TREE_SIZE; j++)
 			searchTree[i][j] = 0;
 	}
 
@@ -468,7 +465,11 @@ int main(int argc, char** argv)
 	bool* visitedInCurrentSearch = new bool[SEARCH_TREE_SIZE];
 	for (int i = 0; i < SEARCH_TREE_SIZE; i++)
 		visitedInCurrentSearch[i] = 0;
-	bool** graph = new bool* [7];
+
+
+	int graphSize = -1;
+	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
+	/*bool** graph = new bool* [7];
 
 	for (int i = 0; i < 7; ++i)
 	{
@@ -492,7 +493,7 @@ int main(int argc, char** argv)
 	graph[5][3] = true;
 	graph[6][1] = true;
 
-	int graphSize = 7;
+	int graphSize = 7;*/
 	int counter[131071];
 	for (int i = 0; i < 131071; ++i)
 	{
@@ -523,6 +524,6 @@ int main(int argc, char** argv)
 		}
 	}
 
-	printf("\nHELLO");*/
+	printf("\nHELLO");
 }
 

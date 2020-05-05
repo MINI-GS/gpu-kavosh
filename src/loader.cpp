@@ -8,6 +8,8 @@
 
 bool** Load(int* n, std::string filename_v, std::string filename_e)
 {
+	int max_id = 500;
+
 	std::fstream file_v;
 	std::fstream file_e;
 
@@ -27,8 +29,12 @@ bool** Load(int* n, std::string filename_v, std::string filename_e)
 		//std::cout << code << std::endl;
 
 		int id = std::stoi(code);
-		ids[id] = vertice_count;
-		vertice_count++;
+		if (id < max_id)
+		{
+			ids[id] = vertice_count;
+			vertice_count++;
+		}
+		
 	}
 
 	bool** graph = new bool* [vertice_count];
@@ -46,15 +52,21 @@ bool** Load(int* n, std::string filename_v, std::string filename_e)
 
 		std::string code = line.substr(0, line.find(";"));
 		int id1 = std::stoi(code);
-		id1 = ids[id1];
 		line = line.substr(line.find(";")+1);
 		code = line.substr(0, line.find(";"));
 		int id2 = std::stoi(code);
-		id2 = ids[id2];
 
-		graph[id1][id2] = true;
-		graph[id2][id1] = true;
+		if (id1 < max_id && id2 < max_id)
+		{
+			id1 = ids[id1];
+			id2 = ids[id2];
+			graph[id1][id2] = true;
+			graph[id2][id1] = true;
+		}
+		
 	}
 
+	std::cout << "Graph size: " << vertice_count << std::endl;
+	(*n) = vertice_count;
 	return graph;
 }
