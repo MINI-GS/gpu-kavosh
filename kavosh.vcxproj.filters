@@ -26,9 +26,15 @@
     <ClInclude Include="src\loader.h">
       <Filter>header</Filter>
     </ClInclude>
+    <ClInclude Include="src\random_graph.h">
+      <Filter>header</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\loader.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\random_graph.cpp">
       <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>

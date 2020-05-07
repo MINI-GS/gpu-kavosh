@@ -6,6 +6,7 @@
 #include <sstream>
 #include <assert.h>
 #include <random>
+#include <time.h>
 #include <float.h>
 
 #include <cuda_runtime.h>
@@ -16,6 +17,7 @@
 #include "config.h"
 #include "labeling.cuh"
 #include "loader.h"
+#include "random_graph.h"
 
 
 #define uint unsigned int
@@ -442,6 +444,7 @@ __host__ __device__ void Enumerate(
  */
 int main(int argc, char** argv)
 {
+	srand(time(NULL));
 	int root = 0;
 	int level = 1;
 	int remaring = 3;
@@ -469,31 +472,7 @@ int main(int argc, char** argv)
 
 	int graphSize = -1;
 	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
-	/*bool** graph = new bool* [7];
 
-	for (int i = 0; i < 7; ++i)
-	{
-		graph[i] = new bool[7];
-		for (int j = 0; j < 7; j++)
-			graph[i][j] = 0;
-	}
-
-	graph[0][1] = true;
-	graph[0][2] = true;
-	graph[1][5] = true;
-	graph[2][6] = true;
-	graph[2][4] = true;
-	graph[2][5] = true;
-	graph[3][2] = true;
-	graph[4][3] = true;
-	graph[4][5] = true;
-	graph[4][2] = true;
-	graph[4][0] = true;
-	graph[5][6] = true;
-	graph[5][3] = true;
-	graph[6][1] = true;
-
-	int graphSize = 7;*/
 	int counter[131071];
 	for (int i = 0; i < 131071; ++i)
 	{
@@ -516,11 +495,44 @@ int main(int argc, char** argv)
 		if (counter[i] != 0)
 		{
 			printf("\n%d %d", i, counter[i]);
-			for (int a = 0; a < 16; ++a)
+			/*for (int a = 0; a < 16; ++a)
 			{
 				if (a % 4 == 0) printf("\n");
 				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
-			}
+			}*/
+		}
+	}
+
+	std::cout << "\nGenerating random graph" << std::endl;
+	GenerateGraph(graph, graphSize);
+	std::cout << "Random graph generated" << std::endl;
+
+	for (int i = 0; i < 131071; ++i)
+	{
+		counter[i] = 0;
+	}
+	Enumerate(
+		root,
+		level,
+		remaring,
+		subgraphSize,
+		searchTree,
+		chosenInTree,
+		visitedInCurrentSearch,
+		graph,
+		graphSize,
+		counter);
+
+	for (uint i = 0; i < 131071; ++i)
+	{
+		if (counter[i] != 0)
+		{
+			printf("\n%d %d", i, counter[i]);
+			/*for (int a = 0; a < 16; ++a)
+			{
+				if (a % 4 == 0) printf("\n");
+				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
+			}*/
 		}
 	}
 

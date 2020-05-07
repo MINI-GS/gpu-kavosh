@@ -121,9 +121,11 @@
     <ClInclude Include="src\config.h" />
     <ClInclude Include="src\labeling.cuh" />
     <ClInclude Include="src\loader.h" />
+    <ClInclude Include="src\random_graph.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\loader.cpp" />
+    <ClCompile Include="src\random_graph.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
