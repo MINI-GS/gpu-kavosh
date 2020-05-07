@@ -505,7 +505,6 @@ int main(int argc, char** argv)
 
 	std::cout << "\nGenerating random graph" << std::endl;
 	GenerateGraph(graph, graphSize);
-	std::cout << "Random graph generated" << std::endl;
 
 	for (int i = 0; i < 131071; ++i)
 	{
