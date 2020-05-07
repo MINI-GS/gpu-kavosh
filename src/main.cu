@@ -430,21 +430,10 @@ __host__ __device__ void Enumerate(
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////
-/*
- * 		int root,
-		int level,
-		int remaining,
-		int subgraphSize,
-		int** searchTree,
-		bool* chosenInTree,
-		bool* visitedInCurrentSearch,
-		bool** graph,
-		int graphSize)
- */
-int main(int argc, char** argv)
+
+// zmieniæ na int* i zwracaæ counter?
+void ProcessGraph(bool** graph, int graphSize)
 {
-	srand(time(NULL));
 	int root = 0;
 	int level = 1;
 	int remaring = 3;
@@ -469,9 +458,6 @@ int main(int argc, char** argv)
 	for (int i = 0; i < SEARCH_TREE_SIZE; i++)
 		visitedInCurrentSearch[i] = 0;
 
-
-	int graphSize = -1;
-	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
 
 	int counter[131071];
 	for (int i = 0; i < 131071; ++i)
@@ -503,38 +489,39 @@ int main(int argc, char** argv)
 		}
 	}
 
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+/*
+ * 		int root,
+		int level,
+		int remaining,
+		int subgraphSize,
+		int** searchTree,
+		bool* chosenInTree,
+		bool* visitedInCurrentSearch,
+		bool** graph,
+		int graphSize)
+ */
+int main(int argc, char** argv)
+{
+	srand(time(NULL));
+	
+
+	std::cout << std::endl << "Loading graph from file" << std::endl;
+	int graphSize = -1;
+	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
+
+	std::cout << std::endl << "Processing graph" << std::endl;
+	ProcessGraph(graph, graphSize);
+
 	std::cout << "\nGenerating random graph" << std::endl;
 	GenerateGraph(graph, graphSize);
 
-	for (int i = 0; i < 131071; ++i)
-	{
-		counter[i] = 0;
-	}
-	Enumerate(
-		root,
-		level,
-		remaring,
-		subgraphSize,
-		searchTree,
-		chosenInTree,
-		visitedInCurrentSearch,
-		graph,
-		graphSize,
-		counter);
+	std::cout << std::endl << "Processing graph" << std::endl;
+	ProcessGraph(graph, graphSize);
 
-	for (uint i = 0; i < 131071; ++i)
-	{
-		if (counter[i] != 0)
-		{
-			printf("\n%d %d", i, counter[i]);
-			/*for (int a = 0; a < 16; ++a)
-			{
-				if (a % 4 == 0) printf("\n");
-				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
-			}*/
-		}
-	}
-
-	printf("\nHELLO");
+	return 0;
 }
 
