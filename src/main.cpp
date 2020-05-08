@@ -19,13 +19,15 @@
 #include "loader.h"
 #include "random_graph.h"
 
+#include <map>
+
 
 #define uint unsigned int
 #define ull unsigned long long
 
 //#define DEBUG
 
-__host__ __device__ void Enumerate(
+void Enumerate(
 	int root,
 	int level,
 	int remaining,
@@ -35,9 +37,9 @@ __host__ __device__ void Enumerate(
 	bool* visitedInCurrentSearch,
 	bool** graph,
 	int graphSize,
-	int* counter);
+	std::map<int, int>& counter);
 
-__host__ __device__ void RevolveR(
+void RevolveR(
 	int n,
 	int left,
 	int right,
@@ -51,10 +53,10 @@ __host__ __device__ void RevolveR(
 	bool* visitedInCurrentSearch,
 	bool** graph,
 	int graphSize,
-	int* counter);
+	std::map<int, int>& counter);
 
 /*
-__host__ __device__ void Vertical(
+ void Vertical(
 		int* arrH,
 		int* arrV,
 		int arrLen,
@@ -91,7 +93,7 @@ __host__ __device__ void Vertical(
 
 
 
-__host__ __device__ void Revolve(
+void Revolve(
 	int n,
 	int left,
 	int right,
@@ -105,7 +107,7 @@ __host__ __device__ void Revolve(
 	bool* visitedInCurrentSearch,
 	bool** graph,
 	int graphSize,
-	int* counter
+	std::map<int, int>& counter
 )
 {
 	int* tab = searchTree[level];
@@ -187,7 +189,7 @@ __host__ __device__ void Revolve(
 	}
 }
 
-__host__ __device__ void RevolveR(
+void RevolveR(
 	int n,
 	int left,
 	int right,
@@ -201,7 +203,7 @@ __host__ __device__ void RevolveR(
 	bool* visitedInCurrentSearch,
 	bool** graph,
 	int graphSize,
-	int* counter)
+	std::map<int, int>& counter)
 {
 	int* tab = searchTree[level];
 
@@ -281,7 +283,7 @@ __host__ __device__ void RevolveR(
 	}
 }
 
-__host__ __device__ void InitChildSet(
+void InitChildSet(
 	int root,
 	int level,
 	int** searchTree,
@@ -313,7 +315,7 @@ __host__ __device__ void InitChildSet(
 	}
 }
 
-__host__ __device__ void Enumerate(
+void Enumerate(
 	int root,
 	int level,
 	int remaining,
@@ -323,17 +325,10 @@ __host__ __device__ void Enumerate(
 	bool* visitedInCurrentSearch,
 	bool** graph,
 	int graphSize,
-	int* counter)
+	std::map<int, int>& counter)
 {
 	if (remaining == 0)
 	{
-		int arrH[MAX_SUBGRAPH_SIZE];
-		int arrV[MAX_SUBGRAPH_SIZE];
-
-		for (int i = 0; i < MAX_SUBGRAPH_SIZE; ++i)
-		{
-			arrH[i] = arrV[i] = i;
-		}
 		bool subgraph[MAX_SUBGRAPH_SIZE_SQUARED];
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; ++i) subgraph[i] = false;
 		bool label[MAX_SUBGRAPH_SIZE_SQUARED];
@@ -364,7 +359,7 @@ __host__ __device__ void Enumerate(
 		Label(subgraph, SUBGRAPH_SIZE, label);
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
-				largest += 1 << ((i/ MAX_SUBGRAPH_SIZE)* SUBGRAPH_SIZE+i% MAX_SUBGRAPH_SIZE);
+				largest += 1 << ((i / MAX_SUBGRAPH_SIZE) * SUBGRAPH_SIZE + i % MAX_SUBGRAPH_SIZE);
 		//Horisontal(arrH, arrV, subgraphSize, 0, subgraph, &largest);
 		++counter[largest];
 
@@ -432,7 +427,7 @@ __host__ __device__ void Enumerate(
 
 
 // zmieniæ na int* i zwracaæ counter?
-void ProcessGraph(bool** graph, int graphSize, int* counter)
+void ProcessGraph(bool** graph, int graphSize, std::map<int, int>& counter)
 {
 	int root = 0;
 	int level = 1;
@@ -477,7 +472,7 @@ void ProcessGraph(bool** graph, int graphSize, int* counter)
 
 
 
-	
+
 
 }
 
@@ -499,19 +494,19 @@ int main(int argc, char** argv)
 	srand(time(NULL));
 
 	std::cout << SUBGRAPH_INDEX_SIZE << std::endl;
-	int counter[SUBGRAPH_INDEX_SIZE];
-	int count_master[SUBGRAPH_INDEX_SIZE];
-	double mean[SUBGRAPH_INDEX_SIZE];
-	double var[SUBGRAPH_INDEX_SIZE];
-	double score[SUBGRAPH_INDEX_SIZE];
+	std::map <int, int> counter;
+	std::map <int, int> count_master;
+	std::map <int, double> mean;
+	std::map <int, double> var;
+	std::map <int, double> score;
 
-	for (int i = 0; i < SUBGRAPH_INDEX_SIZE; i++)
+	/*for (int i = 0; i < SUBGRAPH_INDEX_SIZE; i++)
 	{
 		counter[i]=0;
 		count_master[i]=0;
 		mean[i]=0;
 		var[i]=0;
-	}
+	}*/
 
 
 	std::cout << std::endl << "Loading graph from file" << std::endl;
@@ -524,9 +519,9 @@ int main(int argc, char** argv)
 	std::cout << "graphID\tcount" << std::endl;
 	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
 	{
-		if (count_master[i] != 0)
+		if (count_master[i])
 		{
-			printf("%d\t%d\n", i, count_master[i]);
+			std::cout << i << "\t" << count_master[i] << std::endl;
 			/*for (int a = 0; a < 16; ++a)
 			{
 				if (a % 4 == 0) printf("\n");
@@ -535,40 +530,46 @@ int main(int argc, char** argv)
 		}
 	}
 
-	for (int i = 0; i < 1; i++)
+	std::cout << std::endl << "Generating random graphs" << std::endl;
+	for (int i = 0; i < RANDOM_GRAPH_NUMBER; i++)
 	{
-		std::cout << std::endl << "Generating random graph" << std::endl;
+		std::cout << ".";
+		//std::cout << std::endl << "Generating random graph " << i << std::endl;
 		GenerateGraph(graph, graphSize);
 
-		std::cout << std::endl << "Processing graph" << std::endl;
+		//std::cout << std::endl << "Processing graph" << std::endl;
 		ProcessGraph(graph, graphSize, counter);
 
 		for (int j = 0; j < SUBGRAPH_INDEX_SIZE; j++)
 		{
 			mean[j] += counter[j];
-			var[j] += counter[j]* counter[j];
+
+			var[j] += counter[j] * counter[j];
+
 		}
 	}
+	std::cout << std::endl;
 
 	std::cout << std::endl << "Calculating score" << std::endl;
 
 	for (int i = 0; i < SUBGRAPH_INDEX_SIZE; i++)
 	{
-		mean[i] /= 100.0;
-		var[i] = sqrt((var[i] - (100.0 * (mean[i] * mean[i]))) / 100.0);
+		mean[i] = mean[i] / (double)RANDOM_GRAPH_NUMBER;
+		var[i] = sqrt((var[i] - ((double)RANDOM_GRAPH_NUMBER * (mean[i] * mean[i]))) / (double)RANDOM_GRAPH_NUMBER);
 
 		if (var[i] != 0)
-			score[i] = (count_master[i + 1] - mean[i]) / var[i];
+			score[i] = (count_master[i] - mean[i]) / var[i];
 		else
 			score[i] = -1;
+
 	}
-	
+
 	std::cout << "graphID\tscore" << std::endl;
 	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
 	{
-		if (score[i] > 0)
+		if (count_master[i])
 		{
-			printf("%d\t%d\n", i, score[i]);
+			std::cout << i << "\t" << score[i] << std::endl;
 			/*for (int a = 0; a < 16; ++a)
 			{
 				if (a % 4 == 0) printf("\n");

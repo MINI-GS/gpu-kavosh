@@ -114,8 +114,8 @@
     </CudaCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CudaCompile Include="src\labeling.cu" />
-    <CudaCompile Include="src\main.cu" />
+    <CudaCompile Include="src\labeling.cpp" />
+    <CudaCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\config.h" />

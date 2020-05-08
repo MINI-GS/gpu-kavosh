@@ -29,7 +29,7 @@ std::tuple<int, int> GetRandomEdge1(bool** graph, int n, int edge_count)
 				return std::make_tuple(i, j);
 		}
 	}
-	std::cout << edge_count << ":::" << edge_number << std::endl;
+	//std::cout << edge_count << ":::" << edge_number << std::endl;
 	throw "Something weird happened - GetRandomEdge";
 }
 
@@ -84,7 +84,7 @@ bool IsConnected(bool** graph, int a, int b)
 
 void GenerateGraph(bool** graph, int n)
 {
-	auto start = high_resolution_clock::now();
+	//auto start = high_resolution_clock::now();
 
 	int edge_count = 0;
 	for (int i = 0; i < n; i++)
@@ -121,11 +121,9 @@ void GenerateGraph(bool** graph, int n)
 		AddEdge(graph, b, c);
 	}
 
-	auto stop = high_resolution_clock::now();
-
-	auto duration = duration_cast<microseconds>(stop - start);
-
-	std::cout << "Time taken by graph generation: "
-		<< duration.count() << " microseconds" << std::endl;
-	std::cout << "Avarage generated edge pairs: " << generated_edges / (numOfExchange * 1.0) << std::endl;
+	//auto stop = high_resolution_clock::now();
+	//auto duration = duration_cast<microseconds>(stop - start);
+	//std::cout << "Time taken by graph generation: "
+	//	<< duration.count() << " microseconds" << std::endl;
+	//std::cout << "Avarage generated edge pairs: " << generated_edges / (numOfExchange * 1.0) << std::endl;
 }

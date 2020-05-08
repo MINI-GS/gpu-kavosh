@@ -9,10 +9,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="src\main.cu">
+    <CudaCompile Include="src\main.cpp">
       <Filter>source</Filter>
     </CudaCompile>
-    <CudaCompile Include="src\labeling.cu">
+    <CudaCompile Include="src\labeling.cpp">
       <Filter>source</Filter>
     </CudaCompile>
   </ItemGroup>
