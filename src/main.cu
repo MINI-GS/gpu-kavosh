@@ -330,7 +330,7 @@ __host__ __device__ void Enumerate(
 		int arrH[MAX_SUBGRAPH_SIZE];
 		int arrV[MAX_SUBGRAPH_SIZE];
 
-		for (int i = 0; i < 8; ++i)
+		for (int i = 0; i < MAX_SUBGRAPH_SIZE; ++i)
 		{
 			arrH[i] = arrV[i] = i;
 		}
@@ -432,7 +432,7 @@ __host__ __device__ void Enumerate(
 
 
 // zmieniæ na int* i zwracaæ counter?
-void ProcessGraph(bool** graph, int graphSize)
+void ProcessGraph(bool** graph, int graphSize, int* counter)
 {
 	int root = 0;
 	int level = 1;
@@ -459,8 +459,7 @@ void ProcessGraph(bool** graph, int graphSize)
 		visitedInCurrentSearch[i] = 0;
 
 
-	int counter[131071];
-	for (int i = 0; i < 131071; ++i)
+	for (int i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
 	{
 		counter[i] = 0;
 	}
@@ -476,18 +475,9 @@ void ProcessGraph(bool** graph, int graphSize)
 		graphSize,
 		counter);
 
-	for (uint i = 0; i < 131071; ++i)
-	{
-		if (counter[i] != 0)
-		{
-			printf("\n%d %d", i, counter[i]);
-			/*for (int a = 0; a < 16; ++a)
-			{
-				if (a % 4 == 0) printf("\n");
-				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
-			}*/
-		}
-	}
+
+
+	
 
 }
 
@@ -507,20 +497,85 @@ void ProcessGraph(bool** graph, int graphSize)
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
-	
+
+	std::cout << SUBGRAPH_INDEX_SIZE << std::endl;
+	int counter[SUBGRAPH_INDEX_SIZE];
+	int count_master[SUBGRAPH_INDEX_SIZE];
+	double mean[SUBGRAPH_INDEX_SIZE];
+	double var[SUBGRAPH_INDEX_SIZE];
+	double score[SUBGRAPH_INDEX_SIZE];
+
+	for (int i = 0; i < SUBGRAPH_INDEX_SIZE; i++)
+	{
+		counter[i]=0;
+		count_master[i]=0;
+		mean[i]=0;
+		var[i]=0;
+	}
+
 
 	std::cout << std::endl << "Loading graph from file" << std::endl;
 	int graphSize = -1;
 	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
 
 	std::cout << std::endl << "Processing graph" << std::endl;
-	ProcessGraph(graph, graphSize);
+	ProcessGraph(graph, graphSize, count_master);
 
-	std::cout << "\nGenerating random graph" << std::endl;
-	GenerateGraph(graph, graphSize);
+	std::cout << "graphID\tcount" << std::endl;
+	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
+	{
+		if (count_master[i] != 0)
+		{
+			printf("%d\t%d\n", i, count_master[i]);
+			/*for (int a = 0; a < 16; ++a)
+			{
+				if (a % 4 == 0) printf("\n");
+				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
+			}*/
+		}
+	}
 
-	std::cout << std::endl << "Processing graph" << std::endl;
-	ProcessGraph(graph, graphSize);
+	for (int i = 0; i < 1; i++)
+	{
+		std::cout << std::endl << "Generating random graph" << std::endl;
+		GenerateGraph(graph, graphSize);
+
+		std::cout << std::endl << "Processing graph" << std::endl;
+		ProcessGraph(graph, graphSize, counter);
+
+		for (int j = 0; j < SUBGRAPH_INDEX_SIZE; j++)
+		{
+			mean[j] += counter[j];
+			var[j] += counter[j]* counter[j];
+		}
+	}
+
+	std::cout << std::endl << "Calculating score" << std::endl;
+
+	for (int i = 0; i < SUBGRAPH_INDEX_SIZE; i++)
+	{
+		mean[i] /= 100.0;
+		var[i] = sqrt((var[i] - (100.0 * (mean[i] * mean[i]))) / 100.0);
+
+		if (var[i] != 0)
+			score[i] = (count_master[i + 1] - mean[i]) / var[i];
+		else
+			score[i] = -1;
+	}
+	
+	std::cout << "graphID\tscore" << std::endl;
+	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
+	{
+		if (score[i] > 0)
+		{
+			printf("%d\t%d\n", i, score[i]);
+			/*for (int a = 0; a < 16; ++a)
+			{
+				if (a % 4 == 0) printf("\n");
+				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
+			}*/
+		}
+	}
 
 	return 0;
 }
