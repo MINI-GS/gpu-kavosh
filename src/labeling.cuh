@@ -10,10 +10,8 @@
 
 #include <cuda_runtime.h>
 #include <cuda_profiler_api.h>
-#include <helper_cuda.h>
-#include <helper_functions.h>
 
 
 
- void Label(bool* graph, int n, bool* label);
+__host__ __device__ void Label(bool* graph, int n, bool* label);
 
