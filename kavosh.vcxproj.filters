@@ -1,0 +1,41 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="source">
+      <UniqueIdentifier>{283de670-4f98-458e-b298-f7528d6c2f29}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="header">
+      <UniqueIdentifier>{867ce742-140a-4a3e-9e7e-01de9512c44c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="src\main.cpp">
+      <Filter>source</Filter>
+    </CudaCompile>
+    <CudaCompile Include="src\labeling.cpp">
+      <Filter>source</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\labeling.cuh">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\config.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\loader.h">
+      <Filter>header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\random_graph.h">
+      <Filter>header</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\loader.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\random_graph.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
