@@ -45,7 +45,7 @@ __device__ void Enumerate(
 template<class T>
 __host__ __device__ void swap(int i, int j, T* tab)
 {
-	int temp = tab[i];
+	T temp = tab[i];
 	tab[i] = tab[j];
 	tab[j] = temp;
 }
