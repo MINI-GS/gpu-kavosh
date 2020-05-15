@@ -8,6 +8,9 @@
 #include <random>
 #include <time.h>
 #include <float.h>
+#include <iostream>
+#include <cstdio>
+#include <ctime>
 
 #include <cuda_runtime.h>
 #include <cuda_profiler_api.h>
@@ -134,6 +137,41 @@ __host__ __device__ void InitChildSet(
 	}
 }
 
+__host__ __device__ void Label2(bool* graph, int n, bool* label)
+{
+	int vertex_label[MAX_SUBGRAPH_SIZE];
+	for (int i = 0; i < n; i++)
+		vertex_label[i] = i;
+
+	do
+	{
+		int result = 0; // 0 - continue, 1 - current is beter, 2 - current is worse
+		for (int i = 0; (i < n) && !result; i++)
+			for (int j = 0; (j < n) && !result; j++)
+			{
+				// if current permutation is better
+				if (get_edge(vertex_label[i], vertex_label[j], graph) && !get_edge(i, j, label))
+					result = 1;
+				else if (!get_edge(vertex_label[i], vertex_label[j], graph) && get_edge(i, j, label))
+					result = 2;
+			}
+
+		// if current is not better
+		if (result != 1)
+			continue;
+
+		// save current
+		for (int i = 0; (i < n); i++)
+			for (int j = 0; (j < n); j++)
+			{
+				bool edge_value = get_edge(vertex_label[i], vertex_label[j], graph);
+				set_edge(i, j, label, edge_value);
+			}
+
+	} while (NextPermutation(0, n, vertex_label));
+}
+
+
 __device__ void Enumerate(
 	int root,
 	int level,
@@ -176,14 +214,14 @@ __device__ void Enumerate(
 			}
 		}
 		uint largest = 0;
-		// TODO make Label less recursive
-		Label(subgraph, subgraphSize, label);
+
+		Label2(subgraph, subgraphSize, label);
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
 				largest += 1 << ((i / MAX_SUBGRAPH_SIZE) * subgraphSize + i % MAX_SUBGRAPH_SIZE);
 
 		atomicAdd(counter + largest, 1);
-
+		//++counter[largest];
 		return;
 	}
 
@@ -276,7 +314,7 @@ __global__ void EnumerateGPU(
 		searchTreeRoot[1] = tid;
 		chosenInTreeRoot[tid] = true;
 		visitedInCurrentSearchRoot[tid] = true;
-
+			
 		Enumerate(
 			tid,
 			1,
@@ -309,14 +347,10 @@ int GetMaxDeg(bool* graph, int graphSize)
 	return max;
 }
 
-void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize = 3)
+void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize = 4)
 {
-	int root = 0;
-	int level = 1;
-	int remaring = 3;
-
-	const int noBlocksPerRun = 2;
-	const int noThreadsPerBlock = 256;
+	const int noBlocksPerRun = 4;
+	const int noThreadsPerBlock = 64;
 	const int noThreadsPerRun = noBlocksPerRun * noThreadsPerBlock;
 	int searchTreeRowSize = GetMaxDeg(graph,graphSize) * (subgraphSize - 2);
 
@@ -394,7 +428,7 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 //{
 //	int root = 0;
 //	int level = 1;
-//	int subgraphSize = SUBGRAPH_SIZE;
+//	int subgraphSize = 4;
 //	int remaring = subgraphSize - 1;
 //	int* searchTree = new int [5 * SEARCH_TREE_SIZE];
 //	bool* chosenInTree = new bool[SEARCH_TREE_SIZE];
@@ -412,7 +446,7 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 //	}
 //
 //
-//	for (int r = 0; r < 256; ++r)
+//	for (int r = 0; r < graphSize; ++r)
 //	{
 //		root = r;
 //		level = 1;
@@ -490,7 +524,14 @@ int main(int argc, char** argv)
 	}
 	std::cout << std::endl << "Processing graph" << std::endl;
 
+	std::clock_t start;
+	double duration;
+
+	start = std::clock();
 	ProcessGraphGPU(graph_one_dim, graphSize, count_master, 131072);
+	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
+
+	std::cout << "printf: " << duration << '\n';
 	std::cout << "graphID\tcount" << std::endl;
 	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
 	{

@@ -13,5 +13,8 @@
 
 
 
+
+__host__ __device__ bool get_edge(int vertex1, int vertex2, bool* graph);
+__host__ __device__ void set_edge(int vertex1, int vertex2, bool* graph, bool value);
 __host__ __device__ void Label(bool* graph, int n, bool* label);
 
