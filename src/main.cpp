@@ -347,7 +347,7 @@ int GetMaxDeg(bool* graph, int graphSize)
 	return max;
 }
 
-void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize = 4)
+void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize = SUBGRAPH_SIZE)
 {
 	const int noBlocksPerRun = 4;
 	const int noThreadsPerBlock = 64;
@@ -423,79 +423,14 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 }
 
 
-// zmieniæ na int* i zwracaæ counter?
-//void ProcessGraph(bool* graph, int graphSize, int* counter)
-//{
-//	int root = 0;
-//	int level = 1;
-//	int subgraphSize = 4;
-//	int remaring = subgraphSize - 1;
-//	int* searchTree = new int [5 * SEARCH_TREE_SIZE];
-//	bool* chosenInTree = new bool[SEARCH_TREE_SIZE];
-//	bool* visitedInCurrentSearch = new bool[SEARCH_TREE_SIZE];
-//	int searchTreeRowSize = SEARCH_TREE_SIZE;
-//	for (int i = 0; i < 5; ++i)
-//	{
-//		for (int j = 0; j < SEARCH_TREE_SIZE; j++)
-//			searchTree[i * searchTreeRowSize + j] = 0;
-//	}
-//
-//	for (int i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
-//	{
-//		counter[i] = 0;
-//	}
-//
-//
-//	for (int r = 0; r < graphSize; ++r)
-//	{
-//		root = r;
-//		level = 1;
-//
-//		for (int i = 0; i < 5; ++i)
-//		{
-//			for (int j = 0; j < SEARCH_TREE_SIZE; ++j)
-//			{
-//				searchTree[i * searchTreeRowSize + j] = 0;
-//			}
-//		}
-//
-//		searchTree[0] = 1;
-//		searchTree[0 * searchTreeRowSize + 1] = root;
-//
-//		for (int i = 0; i < SEARCH_TREE_SIZE; i++)
-//			chosenInTree[i] = 0;
-//		chosenInTree[root] = true;
-//		for (int i = 0; i < SEARCH_TREE_SIZE; i++)
-//			visitedInCurrentSearch[i] = 0;
-//
-//
-//
-//		Enumerate(
-//			root,
-//			level,
-//			remaring,
-//			subgraphSize,
-//			searchTree,
-//			searchTreeRowSize,
-//			chosenInTree,
-//			visitedInCurrentSearch,
-//			graph,
-//			graphSize,
-//			counter);
-//	}
-//
-//}
-
-
 ////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char** argv)
 {
 	srand(time(NULL));
 
-	std::cout << SUBGRAPH_INDEX_SIZE << std::endl;
-	int* counter = new int[131072];
-	int* count_master = new int[131072];
+	int* counter = new int[SUBGRAPH_INDEX_SIZE];
+	int* count_master = new int[SUBGRAPH_INDEX_SIZE];
 	std::map <int, double> mean;
 	std::map <int, double> var;
 	std::map <int, double> score;
@@ -528,21 +463,16 @@ int main(int argc, char** argv)
 	double duration;
 
 	start = std::clock();
-	ProcessGraphGPU(graph_one_dim, graphSize, count_master, 131072);
+	ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE);
 	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
-	std::cout << "printf: " << duration << '\n';
+	std::cout << "ProcessGraphGPU duration: " << duration << '\n';
 	std::cout << "graphID\tcount" << std::endl;
 	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
 	{
 		if (count_master[i])
 		{
 			std::cout << i << "\t" << count_master[i] << std::endl;
-			/*for (int a = 0; a < 16; ++a)
-			{
-				if (a % 4 == 0) printf("\n");
-				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
-			}*/
 		}
 	}
 
@@ -592,11 +522,6 @@ int main(int argc, char** argv)
 		if (count_master[i])
 		{
 			std::cout << i << "\t" << score[i] << std::endl;
-			/*for (int a = 0; a < 16; ++a)
-			{
-				if (a % 4 == 0) printf("\n");
-				printf("%d", (i & (1 << (15 - a))) == 0 ? 0 : 1);
-			}*/
 		}
 	}
 

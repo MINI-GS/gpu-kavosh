@@ -127,6 +127,9 @@
     <ClCompile Include="src\loader.cpp" />
     <ClCompile Include="src\random_graph.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="results.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="$(CUDAPropsPath)\CUDA 10.1.targets" />
