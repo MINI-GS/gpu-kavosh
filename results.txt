@@ -1,4 +1,4 @@
-# Small graph
+# Small graph  (max_id=500)
 
 ## GPU
 
@@ -105,7 +105,7 @@ graphID score
 
 
 
-# Bigger graph
+# Bigger graph  (max_id=20000)
 
 
 ## CPU 1 Thread
