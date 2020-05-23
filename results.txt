@@ -1,54 +1,139 @@
-Config:
+# Small graph
 
-	constexpr int SUBGRAPH_SIZE = 3; // GPU IS LIMITED TO 3
-	constexpr int SEARCH_TREE_SIZE = 2000;
-	constexpr int MAX_SUBGRAPH_SIZE = 3;
-	constexpr int MAX_SUBGRAPH_SIZE_SQUARED = MAX_SUBGRAPH_SIZE* MAX_SUBGRAPH_SIZE;
-	constexpr long SUBGRAPH_INDEX_SIZE = 1 << MAX_SUBGRAPH_SIZE_SQUARED;
+## GPU
 
-	constexpr int RANDOM_GRAPH_NUMBER = 1;
+### Config:
 
-	constexpr size_t BYTES_IN_GIGABYTE = 1'000'000'000;
+constexpr int SUBGRAPH_SIZE = 3; // GPU IS LIMITED TO 3
+constexpr int SEARCH_TREE_SIZE = 2000;
+constexpr int MAX_SUBGRAPH_SIZE = 3;
+constexpr int MAX_SUBGRAPH_SIZE_SQUARED = MAX_SUBGRAPH_SIZE* MAX_SUBGRAPH_SIZE;
+constexpr long SUBGRAPH_INDEX_SIZE = 1 << MAX_SUBGRAPH_SIZE_SQUARED;
 
-Results:
+constexpr int RANDOM_GRAPH_NUMBER = 1;
 
-	Loading graph from file
-	Graph size: 179
+constexpr size_t BYTES_IN_GIGABYTE = 1'000'000'000;
 
-	Processing graph
-	Allocating 0.000877 GB for search tree array
-	Allocating 0.000046 GB for chosen in tree array
-	Allocating 0.000046 GB for visited in current seatch array
-	Allocating 0.000002 GB for counter array
-	Allocating 0.000032 GB for graph array
-	Lauching kernel
-	Copying couter to host
-	Device memory deallocation
+### Results:
 
-	ProcessGraphGPU duration: 73.529
-	graphID count
-	3       389850
-	5       648572
-	7       448199
-	39      164200
-	295     1057821
+```
+(using Label2)
+```
 
-	Generating random graphs
-	.
+Loading graph from file
+Graph size: 179
 
-	Calculating score
-	graphID score
-	3       -1
-	5       -nan(ind)
-	7       -nan(ind)
-	39      -1
-	295     -1
+Processing graph
+Allocating 0.000877 GB for search tree array
+Allocating 0.000046 GB for chosen in tree array
+Allocating 0.000046 GB for visited in current seatch array
+Allocating 0.000002 GB for counter array
+Allocating 0.000032 GB for graph array
+Lauching kernel
+Copying couter to host
+Device memory deallocation
+
+ProcessGraphGPU duration: 73.529
+graphID count
+3       389850
+5       648572
+7       448199
+39      164200
+295     1057821
+
+(³¹cznie 2'708'642)
+
+Generating random graphs
+.
+
+Calculating score
+graphID score
+3       -1
+5       -nan(ind)
+7       -nan(ind)
+39      -1
+295     -1
 
 
-Label3:
-	4382    526419
-	4958    775162
-	8598    1056731
-	13278   228026
-	27030   78901
-	31710   43403
+```
+Using Label3
+```
+
+4382    526419
+4958    775162
+8598    1056731
+13278   228026
+27030   78901
+31710   43403
+
+(³¹cznie 2'708'642)
+
+```
+Winiki na CPU takie same jak using Label3
+```
+
+
+## CPU 1 Thread
+
+Loading graph from file
+Graph size: 179
+
+Processing graph
+Lauching kernel
+Copying couter to host
+
+ProcessGraphThreading duration: 1.623
+graphID count
+4382    526419
+4958    775162
+8598    1056731
+13278   228026
+27030   78901
+31710   43403
+
+Generating random graphs
+.
+
+Calculating score
+graphID score
+4382    -1
+4958    -1
+8598    -1
+13278   -1
+27030   -1
+31710   -1
+
+
+
+# Bigger graph
+
+
+## CPU 1 Thread
+
+Loading graph from file
+Graph size: 954
+
+Processing graph
+Lauching kernel
+Copying couter to host
+
+ProcessGraphThreading duration: 224.908
+graphID count
+4382    59099363
+4958    46066926
+8598    87879603
+13278   8712380
+27030   3816894
+31710   1125249
+
+Generating random graphs
+.
+
+Calculating score
+graphID score
+4382    -1
+4958    -1
+8598    -1
+13278   -1
+27030   -1
+31710   -1
