@@ -108,6 +108,26 @@ graphID score
 # Bigger graph  (max_id=20000)
 
 
+## GPU
+
+Loading graph from file
+Graph size: 954
+
+Processing graph
+Allocating 0.003408 GB for search tree array
+Allocating 0.000244 GB for chosen in tree array
+Allocating 0.000244 GB for visited in current seatch array
+Allocating 0.000262 GB for counter array
+Allocating 0.000910 GB for graph array
+Lauching kernel
+kernellAssert: invalid argument
+
+
+## GPU without shared memory
+
+
+
+
 ## CPU 1 Thread
 
 Loading graph from file
