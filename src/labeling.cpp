@@ -5,18 +5,18 @@
 // to change, dynamic allocation?
 
 
-__host__ __device__ bool get_edge(int vertex1, int vertex2, bool* graph)
+bool get_edge(int vertex1, int vertex2, bool* graph)
 {
 	return graph[MAX_SUBGRAPH_SIZE * vertex1 + vertex2];
 }
 
-__host__ __device__  void set_edge(int vertex1, int vertex2, bool* graph, bool value)
+ void set_edge(int vertex1, int vertex2, bool* graph, bool value)
 {
 	graph[MAX_SUBGRAPH_SIZE * vertex1 + vertex2] = value;
 }
 
 
- __host__ __device__ void permute(int* vertex_label, bool* graph, bool* label, int l, int r)
+ void permute(int* vertex_label, bool* graph, bool* label, int l, int r)
 {
 	// end of heap
 	if (l == r)
@@ -66,7 +66,7 @@ __host__ __device__  void set_edge(int vertex1, int vertex2, bool* graph, bool v
 	}
 }
 
-__host__ __device__ void Label(bool* graph, int n, bool* label)
+void Label(bool* graph, int n, bool* label)
 {
 	//assert SUBGRAPH_SIZE == n
 
@@ -79,7 +79,7 @@ __host__ __device__ void Label(bool* graph, int n, bool* label)
 }
 
 
-__host__ __device__ void permute3(int* vertex_label, bool* graph, bool* label, int l, int r)
+void permute3(int* vertex_label, bool* graph, bool* label, int l, int r)
 {
 	int indexes[SUBGRAPH_SIZE];
 	for (int i = 0; i < SUBGRAPH_SIZE; i++)
@@ -167,7 +167,7 @@ __host__ __device__ void permute3(int* vertex_label, bool* graph, bool* label, i
 
 }
 
-__host__ __device__ void Label3(bool* graph, int n, bool* label)
+void Label3(bool* graph, int n, bool* label)
 {
 	//assert SUBGRAPH_SIZE == n
 	if (n != SUBGRAPH_SIZE)

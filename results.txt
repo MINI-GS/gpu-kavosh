@@ -104,6 +104,37 @@ graphID score
 31710   -1
 
 
+## CPU multiple threads
+
+Loading graph from file
+Graph size: 179
+
+Processing graph
+Lauching kernel
+Copying couter to host
+
+ProcessGraphThreading duration: 0.46
+graphID count
+4382    526419
+4958    775162
+8598    1056731
+13278   228026
+27030   78901
+31710   43403
+
+Generating random graphs
+.
+
+Calculating score
+graphID score
+4382    -1
+4958    -1
+8598    -1
+13278   -1
+27030   -1
+31710   -1
+
+
 
 # Bigger graph  (max_id=20000)
 
@@ -125,7 +156,39 @@ kernellAssert: invalid argument
 
 ## GPU without shared memory
 
+Loading graph from file
+Graph size: 954
 
+Processing graph
+Allocating 0.003408 GB for search tree array
+Allocating 0.000244 GB for chosen in tree array
+Allocating 0.000244 GB for visited in current seatch array
+Allocating 0.000262 GB for counter array
+Allocating 0.000910 GB for graph array
+Lauching kernel
+Copying couter to host
+Device memory deallocation
+
+ProcessGraphGPU duration: 7532.47
+graphID count
+4382    59099363
+4958    46066926
+8598    87879603
+13278   8712380
+27030   3816894
+31710   1125249
+
+Generating random graphs
+.
+
+Calculating score
+graphID score
+4382    -1
+4958    -1
+8598    -1
+13278   -1
+27030   -1
+31710   -1
 
 
 ## CPU 1 Thread
@@ -138,6 +201,37 @@ Lauching kernel
 Copying couter to host
 
 ProcessGraphThreading duration: 224.908
+graphID count
+4382    59099363
+4958    46066926
+8598    87879603
+13278   8712380
+27030   3816894
+31710   1125249
+
+Generating random graphs
+.
+
+Calculating score
+graphID score
+4382    -1
+4958    -1
+8598    -1
+13278   -1
+27030   -1
+31710   -1
+
+
+## CPU multiple threads
+
+Loading graph from file
+Graph size: 954
+
+Processing graph
+Lauching kernel
+Copying couter to host
+
+ProcessGraphThreading duration: 74.054
 graphID count
 4382    59099363
 4958    46066926

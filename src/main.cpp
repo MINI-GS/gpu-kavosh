@@ -12,9 +12,9 @@
 #include <cstdio>
 #include <ctime>
 
-#include <cuda_runtime.h>
-#include <cuda_profiler_api.h>
-#include <device_atomic_functions.h>
+#include <vector>
+#include <atomic>
+#include <thread>
 
 #include "config.h"
 #include "labeling.cuh"
@@ -29,7 +29,7 @@
 
 //#define DEBUG
 
-__device__ void Enumerate(
+void Enumerate(
 	int root,
 	int level,
 	int remaining,
@@ -43,7 +43,7 @@ __device__ void Enumerate(
 	int* counter);
 
 template<class T>
-__host__ __device__ void swap(int i, int j, T* tab)
+void swap(int i, int j, T* tab)
 {
 	T temp = tab[i];
 	tab[i] = tab[j];
@@ -51,7 +51,7 @@ __host__ __device__ void swap(int i, int j, T* tab)
 }
 
 template<class T>
-__host__ __device__ void reverse(int i, int j, T* tab)
+void reverse(int i, int j, T* tab)
 {
 	--j;
 	while (i < j)
@@ -71,7 +71,7 @@ __host__ __device__ void reverse(int i, int j, T* tab)
 /// that the arrangement is not greater than the previous,
 /// but the lowest possible(sorted in ascending order).
 template<class T>
-__host__ __device__ bool NextPermutation(int first, int last, T* tab)
+bool NextPermutation(int first, int last, T* tab)
 {
 	if (first == last)
 		return false;
@@ -104,7 +104,7 @@ __host__ __device__ bool NextPermutation(int first, int last, T* tab)
 	}
 }
 
-__host__ __device__ void InitChildSet(
+void InitChildSet(
 	int root,
 	int level,
 	int* searchTree,
@@ -137,7 +137,7 @@ __host__ __device__ void InitChildSet(
 	}
 }
 
-__host__ __device__ void Label2(bool* graph, int n, bool* label)
+void Label2(bool* graph, int n, bool* label)
 {
 	int vertex_label[MAX_SUBGRAPH_SIZE];
 	for (int i = 0; i < n; i++)
@@ -172,7 +172,7 @@ __host__ __device__ void Label2(bool* graph, int n, bool* label)
 }
 
 
-__device__ void Enumerate(
+void Enumerate(
 	int root,
 	int level,
 	int remaining,
@@ -183,7 +183,7 @@ __device__ void Enumerate(
 	bool* visitedInCurrentSearch,
 	bool* graph,
 	int graphSize,
-	int* counter)
+	std::atomic<int>* counter)
 {
 	if (remaining == 0)
 	{
@@ -214,14 +214,13 @@ __device__ void Enumerate(
 			}
 		}
 		uint largest = 0;
-
-		Label3(subgraph, subgraphSize, label);
+		
+		Label(subgraph, subgraphSize, label);
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
 				largest += 1 << ((i / MAX_SUBGRAPH_SIZE) * subgraphSize + i % MAX_SUBGRAPH_SIZE);
 
-		atomicAdd(counter + largest, 1);
-		//++counter[largest];
+		++counter[largest];
 		return;
 	}
 
@@ -234,6 +233,7 @@ __device__ void Enumerate(
 		visitedInCurrentSearch,
 		graph,
 		graphSize);
+
 
 
 	for (int k = 1; k <= remaining; ++k)
@@ -292,7 +292,7 @@ __device__ void Enumerate(
 	}
 }
 
-__global__ void EnumerateGPU(
+void EnumerateGPU(
 	int subgraphSize,
 	int* searchTree,
 	int searchTreeSize,
@@ -300,16 +300,10 @@ __global__ void EnumerateGPU(
 	bool* visitedInCurrentSearch,
 	bool* graph,
 	int graphSize,
-	int* counter
+	std::atomic<int>* counter,
+	int tid
 )
 {
-	extern __shared__ bool graph_shared[];
-	unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-
-	for (int i = threadIdx.x; i < graphSize * graphSize; i += 64)
-		graph_shared[i] = graph[i];
-	__syncthreads();
-
 	if (tid < graphSize)
 	{
 		int* searchTreeRoot = searchTree + (tid * searchTreeSize * subgraphSize);
@@ -329,7 +323,7 @@ __global__ void EnumerateGPU(
 			searchTreeSize,
 			chosenInTreeRoot,
 			visitedInCurrentSearchRoot,
-			graph_shared,
+			graph,
 			graphSize,
 			counter);
 	}
@@ -352,77 +346,77 @@ int GetMaxDeg(bool* graph, int graphSize)
 	return max;
 }
 
-void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize = SUBGRAPH_SIZE)
+void ProcessGraphThreading(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize = SUBGRAPH_SIZE)
 {
 	const int noBlocksPerRun = 4;
 	const int noThreadsPerBlock = 64;
 	const int noThreadsPerRun = noBlocksPerRun * noThreadsPerBlock;
 	int searchTreeRowSize = GetMaxDeg(graph,graphSize) * (subgraphSize - 2);
 
+
 	// TODO add errorchecking on allocation
+	const size_t searchTreeSize = noThreadsPerRun * subgraphSize * searchTreeRowSize;
+	int* searchTree_d = new int[searchTreeSize]();
+	for (int i = 0; i < searchTreeSize; i++)
+		searchTree_d[i] = 0;
 
-	int* searchTree_d;
-	const size_t searchTreeSize = noThreadsPerRun * subgraphSize * searchTreeRowSize * sizeof(int);
-	printf("Allocating %f GB for search tree array\n", (double)searchTreeSize / BYTES_IN_GIGABYTE);
-	cudaMalloc((void**)&searchTree_d, searchTreeSize);
-	cudaMemset(searchTree_d, 0, searchTreeSize);
+	const size_t chosenInTreeSize = noThreadsPerRun * graphSize;
+	bool* chosenInTree_d = new bool[chosenInTreeSize]();
+	for (int i = 0; i < chosenInTreeSize; i++)
+		chosenInTree_d[i] = 0;
 
-	bool* chosenInTree_d;
-	const size_t chosenInTreeSize = noThreadsPerRun * graphSize * sizeof(bool);
-	printf("Allocating %f GB for chosen in tree array\n", (double)chosenInTreeSize / BYTES_IN_GIGABYTE);
-	cudaMalloc((void**)&chosenInTree_d, chosenInTreeSize);
-	cudaMemset(chosenInTree_d, 0, chosenInTreeSize);
+	const size_t visitedInCurrentSearchSize = noThreadsPerRun * graphSize;
+	bool* visitedInCurrentSearch_d = new bool[visitedInCurrentSearchSize]();
+	for (int i = 0; i < visitedInCurrentSearchSize; i++)
+		visitedInCurrentSearch_d[i] = 0;
 
-	bool* visitedInCurrentSearch_d;
-	const size_t visitedInCurrentSearchSize = noThreadsPerRun * graphSize * sizeof(bool);
-	printf("Allocating %f GB for visited in current seatch array\n", (double)visitedInCurrentSearchSize / BYTES_IN_GIGABYTE);
-	cudaMalloc((void**)&visitedInCurrentSearch_d, visitedInCurrentSearchSize); // one thread gets its own list (len graph size)
-	cudaMemset(visitedInCurrentSearch_d, 0, visitedInCurrentSearchSize);
+	const size_t counterSize_d = counterSize;
+	std::atomic<int>* counter_d = new std::atomic<int>[counterSize_d]();
+	for (int i = 0; i < counterSize_d; i++)
+		counter_d[i] = 0;
+
+	const size_t graphSize_d = graphSize * graphSize;
+	bool* graph_d = new bool[graphSize_d]();
+	for (int i = 0; i < graphSize_d; i++)
+		graph_d[i] = graph[i];
 
 
-	int* counter_d;
-	const size_t counterSize_d = counterSize * sizeof(int);
-	printf("Allocating %f GB for counter array\n", (double)counterSize_d / BYTES_IN_GIGABYTE);
-	cudaMalloc((void**)&counter_d, counterSize_d); // counter is common for all
-	cudaMemset(counter_d, 0, counterSize_d);
-
-	bool* graph_d;
-	const size_t graphSize_d = graphSize * graphSize * sizeof(bool);
-	printf("Allocating %f GB for graph array\n", (double)graphSize_d / BYTES_IN_GIGABYTE);
-	cudaMalloc((void**)&graph_d, graphSize_d); // graph is common
-	cudaMemcpy(graph_d, graph, graphSize_d, cudaMemcpyHostToDevice);
+	std::thread* threads = new std::thread[noBlocksPerRun * noThreadsPerBlock];
 
 
 	// TODO start on more threads (one should add more memory)
 	//     and process all vertices (as a root)
 	printf("Lauching kernel\n");
-	EnumerateGPU<<<noBlocksPerRun,noThreadsPerBlock, graphSize_d>>>(
-		subgraphSize,
-		searchTree_d,
-		searchTreeRowSize,
-		chosenInTree_d,
-		visitedInCurrentSearch_d,
-		graph_d,
-		graphSize,
-		counter_d);
-	cudaDeviceSynchronize();
-	cudaError_t code = cudaGetLastError();
-
-	if (code != cudaSuccess)
-	{
-		fprintf(stderr, "kernellAssert: %s\n", cudaGetErrorString(code));
-		if (abort) exit(code);
-	}
-	
+	for(int block=0;block< noBlocksPerRun;block++)
+		for (int t = 0; t < noThreadsPerBlock; t++)
+		{
+			int tid = block * noThreadsPerBlock + t;
+			threads[tid] = std::thread(EnumerateGPU,
+				subgraphSize,
+				searchTree_d,
+				searchTreeRowSize,
+				chosenInTree_d,
+				visitedInCurrentSearch_d,
+				graph_d,
+				graphSize,
+				counter_d,
+				tid);
+		}
+	for (int block = 0; block < noBlocksPerRun; block++)
+		for (int t = 0; t < noThreadsPerBlock; t++)
+		{
+			int tid = block * noThreadsPerBlock + t;
+			threads[tid].join();
+		}
 	printf("Copying couter to host\n");
-	cudaMemcpy(counter, counter_d, counterSize * sizeof(int), cudaMemcpyDeviceToHost);
+	for(int i=0;i< counterSize_d;i++)
+		counter[i] = counter_d[i];
 
-	printf("Device memory deallocation\n");
-	cudaFree(searchTree_d);
-	cudaFree(chosenInTree_d);
-	cudaFree(visitedInCurrentSearch_d);
-	cudaFree(graph_d);
-	cudaFree(counter_d);
+	delete [] searchTree_d;
+	delete [] chosenInTree_d;
+	delete [] visitedInCurrentSearch_d;
+	delete [] graph_d;
+	delete [] counter_d;
 
 	printf("\n");
 }
@@ -434,8 +428,8 @@ int main(int argc, char** argv)
 {
 	srand(time(NULL));
 
-	int* counter = new int[SUBGRAPH_INDEX_SIZE];
-	int* count_master = new int[SUBGRAPH_INDEX_SIZE];
+	int* counter = new int[SUBGRAPH_INDEX_SIZE]();
+	int* count_master = new int[SUBGRAPH_INDEX_SIZE]();
 	std::map <int, double> mean;
 	std::map <int, double> var;
 	std::map <int, double> score;
@@ -454,7 +448,7 @@ int main(int argc, char** argv)
 	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
 
 	// TODO change loader so that it returns one dim array
-	bool* graph_one_dim = new bool[graphSize * graphSize];
+	bool* graph_one_dim = new bool[graphSize * graphSize]();
 	for (int i = 0; i < graphSize; ++i)
 	{
 		for (int j = 0; j < graphSize; ++j)
@@ -468,10 +462,10 @@ int main(int argc, char** argv)
 	double duration;
 
 	start = std::clock();
-	ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE);
+	ProcessGraphThreading(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE);
 	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
-	std::cout << "ProcessGraphGPU duration: " << duration << '\n';
+	std::cout << "ProcessGraphThreading duration: " << duration << '\n';
 	std::cout << "graphID\tcount" << std::endl;
 	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
 	{
