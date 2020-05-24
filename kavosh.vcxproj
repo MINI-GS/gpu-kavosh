@@ -128,7 +128,7 @@
     <ClCompile Include="src\random_graph.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="results.txt" />
+    <Text Include="results.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -39,6 +39,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="results.txt" />
+    <Text Include="results.md" />
   </ItemGroup>
 </Project>
