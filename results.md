@@ -4,6 +4,7 @@
 
 ### Config:
 
+``` cpp
 constexpr int SUBGRAPH_SIZE = 3; // GPU IS LIMITED TO 3
 constexpr int SEARCH_TREE_SIZE = 2000;
 constexpr int MAX_SUBGRAPH_SIZE = 3;
@@ -13,13 +14,14 @@ constexpr long SUBGRAPH_INDEX_SIZE = 1 << MAX_SUBGRAPH_SIZE_SQUARED;
 constexpr int RANDOM_GRAPH_NUMBER = 1;
 
 constexpr size_t BYTES_IN_GIGABYTE = 1'000'000'000;
+```
 
 ### Results:
 
-```
-(using Label2)
-```
 
+- (using Label2)
+
+```
 Loading graph from file
 Graph size: 179
 
@@ -53,12 +55,12 @@ graphID score
 7       -nan(ind)
 39      -1
 295     -1
-
-
-```
-Using Label3
 ```
 
+
+- Using Label3
+
+```
 4382    526419
 4958    775162
 8598    1056731
@@ -67,14 +69,16 @@ Using Label3
 31710   43403
 
 (³¹cznie 2'708'642)
+```
 
-```
-Winiki na CPU takie same jak using Label3
-```
+
+- Winiki na CPU takie same jak using Label3
+
 
 
 ## CPU 1 Thread
 
+```
 Loading graph from file
 Graph size: 179
 
@@ -102,10 +106,12 @@ graphID score
 13278   -1
 27030   -1
 31710   -1
+```
 
 
 ## CPU multiple threads
 
+```
 Loading graph from file
 Graph size: 179
 
@@ -133,7 +139,7 @@ graphID score
 13278   -1
 27030   -1
 31710   -1
-
+```
 
 
 # Bigger graph  (max_id=20000)
@@ -141,6 +147,7 @@ graphID score
 
 ## GPU
 
+```
 Loading graph from file
 Graph size: 954
 
@@ -152,10 +159,12 @@ Allocating 0.000262 GB for counter array
 Allocating 0.000910 GB for graph array
 Lauching kernel
 kernellAssert: invalid argument
+```
 
 
 ## GPU without shared memory
 
+```
 Loading graph from file
 Graph size: 954
 
@@ -189,10 +198,12 @@ graphID score
 13278   -1
 27030   -1
 31710   -1
+```
 
 
 ## CPU 1 Thread
 
+```
 Loading graph from file
 Graph size: 954
 
@@ -220,10 +231,12 @@ graphID score
 13278   -1
 27030   -1
 31710   -1
+```
 
 
 ## CPU multiple threads
 
+```
 Loading graph from file
 Graph size: 954
 
@@ -251,3 +264,4 @@ graphID score
 13278   -1
 27030   -1
 31710   -1
+```
