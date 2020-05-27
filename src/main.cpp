@@ -301,7 +301,8 @@ void EnumerateGPU(
 	bool* graph,
 	int graphSize,
 	std::atomic<int>* counter,
-	int tid
+	int tid,
+	int offset
 )
 {
 	if (tid < graphSize)
@@ -315,7 +316,7 @@ void EnumerateGPU(
 		visitedInCurrentSearchRoot[tid] = true;
 			
 		Enumerate(
-			tid,
+			tid + offset,
 			1,
 			subgraphSize - 1,
 			subgraphSize,
@@ -383,32 +384,32 @@ void ProcessGraphThreading(bool* graph, int graphSize, int* counter, int counter
 
 	std::thread* threads = new std::thread[noBlocksPerRun * noThreadsPerBlock];
 
-
-	// TODO start on more threads (one should add more memory)
-	//     and process all vertices (as a root)
-	printf("Lauching kernel\n");
-	for(int block=0;block< noBlocksPerRun;block++)
-		for (int t = 0; t < noThreadsPerBlock; t++)
+	for (int offset = 0; offset < graphSize; offset += noThreadsPerRun)
+	{
+		for (int block = 0; block < noBlocksPerRun; block++)
 		{
-			int tid = block * noThreadsPerBlock + t;
-			threads[tid] = std::thread(EnumerateGPU,
-				subgraphSize,
-				searchTree_d,
-				searchTreeRowSize,
-				chosenInTree_d,
-				visitedInCurrentSearch_d,
-				graph_d,
-				graphSize,
-				counter_d,
-				tid);
+			for (int t = 0; t < noThreadsPerBlock; t++)
+			{
+				int tid = block * noThreadsPerBlock + t;
+				threads[tid] = std::thread(EnumerateGPU,
+					subgraphSize,
+					searchTree_d,
+					searchTreeRowSize,
+					chosenInTree_d,
+					visitedInCurrentSearch_d,
+					graph_d,
+					graphSize,
+					counter_d,
+					tid,
+					offset);
+			}
+			for (int t = 0; t < noThreadsPerBlock; t++)
+			{
+				int tid = block * noThreadsPerBlock + t;
+				threads[tid].join();
+			}
 		}
-	for (int block = 0; block < noBlocksPerRun; block++)
-		for (int t = 0; t < noThreadsPerBlock; t++)
-		{
-			int tid = block * noThreadsPerBlock + t;
-			threads[tid].join();
-		}
-	printf("Copying couter to host\n");
+	}
 	for(int i=0;i< counterSize_d;i++)
 		counter[i] = counter_d[i];
 
