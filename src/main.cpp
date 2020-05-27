@@ -446,7 +446,7 @@ int main(int argc, char** argv)
 
 	std::cout << std::endl << "Loading graph from file" << std::endl;
 	int graphSize = -1;
-	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
+	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv", 1000);
 
 	// TODO change loader so that it returns one dim array
 	bool* graph_one_dim = new bool[graphSize * graphSize]();
@@ -489,8 +489,7 @@ int main(int argc, char** argv)
 				graph_one_dim[i * graphSize + j] = graph[i][j];
 			}
 		}
-		//std::cout << std::endl << "Processing graph" << std::endl;
-//		ProcessGraph(graph_one_dim, graphSize, counter);
+		ProcessGraphThreading(graph_one_dim, graphSize, counter, SUBGRAPH_INDEX_SIZE);
 
 		for (int j = 0; j < SUBGRAPH_INDEX_SIZE; j++)
 		{

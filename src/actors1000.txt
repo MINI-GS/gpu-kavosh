@@ -1,0 +1,26 @@
+
+Loading graph from file
+Graph size: 189
+
+Processing graph
+
+ProcessGraphThreading duration: 0.506
+graphID count
+4382    679909
+4958    980729
+8598    1331708
+13278   288682
+27030   100050
+31710   53792
+
+Generating random graphs
+
+
+Calculating score
+graphID score
+4382    217.626
+4958    618.809
+8598    835.391
+13278   517.028
+27030   766.833
+31710   290.562
