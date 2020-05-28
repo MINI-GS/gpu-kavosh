@@ -303,12 +303,7 @@ __global__ void EnumerateGPU(
 	int* counter
 )
 {
-	extern __shared__ bool graph_shared[];
 	unsigned int tid = blockIdx.x * blockDim.x + threadIdx.x;
-
-	for (int i = threadIdx.x; i < graphSize * graphSize; i += 64)
-		graph_shared[i] = graph[i];
-	__syncthreads();
 
 	if (tid < graphSize)
 	{
@@ -329,7 +324,7 @@ __global__ void EnumerateGPU(
 			searchTreeSize,
 			chosenInTreeRoot,
 			visitedInCurrentSearchRoot,
-			graph_shared,
+			graph,
 			graphSize,
 			counter);
 	}
@@ -396,7 +391,7 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 	// TODO start on more threads (one should add more memory)
 	//     and process all vertices (as a root)
 	printf("Lauching kernel\n");
-	EnumerateGPU<<<noBlocksPerRun,noThreadsPerBlock, graphSize_d>>>(
+	EnumerateGPU<<<noBlocksPerRun,noThreadsPerBlock>>>(
 		subgraphSize,
 		searchTree_d,
 		searchTreeRowSize,
