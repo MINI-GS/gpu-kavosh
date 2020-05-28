@@ -119,11 +119,17 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\config.h" />
+    <ClInclude Include="src\enumeration_cpu_common.h" />
+    <ClInclude Include="src\enumeration_cpu_multi.h" />
+    <ClInclude Include="src\enumeration_cpu_single.h" />
     <ClInclude Include="src\labeling.cuh" />
     <ClInclude Include="src\loader.h" />
     <ClInclude Include="src\random_graph.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\enumeration_cpu_common.cpp" />
+    <ClCompile Include="src\enumeration_cpu_multi.cpp" />
+    <ClCompile Include="src\enumeration_cpu_single.cpp" />
     <ClCompile Include="src\loader.cpp" />
     <ClCompile Include="src\random_graph.cpp" />
   </ItemGroup>

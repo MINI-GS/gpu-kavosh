@@ -20,6 +20,8 @@
 #include "labeling.cuh"
 #include "loader.h"
 #include "random_graph.h"
+#include "enumeration_cpu_multi.h"
+#include "enumeration_cpu_single.h"
 
 #include <map>
 
@@ -437,18 +439,10 @@ int main(int argc, char** argv)
 	std::map <int, double> var;
 	std::map <int, double> score;
 
-	/*for (int i = 0; i < SUBGRAPH_INDEX_SIZE; i++)
-	{
-		counter[i]=0;
-		count_master[i]=0;
-		mean[i]=0;
-		var[i]=0;
-	}*/
-
 
 	std::cout << std::endl << "Loading graph from file" << std::endl;
 	int graphSize = -1;
-	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv");
+	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv", 500);
 
 	// TODO change loader so that it returns one dim array
 	bool* graph_one_dim = new bool[graphSize * graphSize];
@@ -465,7 +459,7 @@ int main(int argc, char** argv)
 	double duration;
 
 	start = std::clock();
-	ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE);
+	EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
 	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 	std::cout << "ProcessGraphGPU duration: " << duration << '\n';
@@ -492,7 +486,7 @@ int main(int argc, char** argv)
 			}
 		}
 		//std::cout << std::endl << "Processing graph" << std::endl;
-//		ProcessGraph(graph_one_dim, graphSize, counter);
+		EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, counter, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
 
 		for (int j = 0; j < SUBGRAPH_INDEX_SIZE; j++)
 		{
