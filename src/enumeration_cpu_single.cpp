@@ -5,7 +5,7 @@
 
 namespace EnumerationSingle
 {
-	void ProcessGraph(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize = SUBGRAPH_SIZE)
+	void ProcessGraph(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize, int label_type)
 	{
 		const int noBlocksPerRun = 4;
 		const int noThreadsPerBlock = 64;
@@ -59,7 +59,8 @@ namespace EnumerationSingle
 						graphSize,
 						counter_d,
 						tid,
-						offset);
+						offset,
+						label_type);
 				}
 				for (int t = 0; t < noThreadsPerBlock; t++)
 				{

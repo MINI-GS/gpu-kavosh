@@ -31,28 +31,7 @@
 
 //#define DEBUG
 
-__device__ void Enumerate(
-	int root,
-	int level,
-	int remaining,
-	int subgraphSize,
-	int* searchTree,
-	int searchTreeRowSize,
-	bool* chosenInTree,
-	bool* visitedInCurrentSearch,
-	bool* graph,
-	int graphSize,
-	int* counter);
-
-
-
-/// following code is based on std::nextpermutation
-/// posible implememtation from cppreference
-/// true if the function could rearrange the
-/// object as a lexicographicaly greater permutation.
-/// Otherwise, the function returns false to indicate
-/// that the arrangement is not greater than the previous,
-/// but the lowest possible(sorted in ascending order).
+__device__ int label_type = 1;
 
 
 __host__ __device__ void InitChildSet(
@@ -134,7 +113,11 @@ __device__ void Enumerate(
 		}
 		uint largest = 0;
 
-		Label2(subgraph, subgraphSize, label);
+		if(label_type==2)
+			Label2(subgraph, subgraphSize, label);
+		else
+			Label3(subgraph, subgraphSize, label);
+
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
 				largest += 1 << ((i / MAX_SUBGRAPH_SIZE) * subgraphSize + i % MAX_SUBGRAPH_SIZE);
@@ -356,6 +339,27 @@ int main(int argc, char** argv)
 	std::map <int, double> var;
 	std::map <int, double> score;
 
+	int enumeration_strategy = 0;
+	int labeling_strategy = 0;
+	std::cout << "Choose enumeration strategy" << std::endl <<
+		"1 - GPU / 2 - CPU one thread / 3 - CPU multithreading" << std::endl;
+	std::cin >> enumeration_strategy;
+	if (enumeration_strategy < 1 || enumeration_strategy>3)
+	{
+		std::cout << "Bad input" << std::endl;
+		return 1;
+	}
+	std::cout << "Choose labeling strategy" << std::endl;
+	if (enumeration_strategy != 1)
+		std::cout << "1 - Heap's algorithm recurrent / ";
+	std::cout << "2 - algorithm based on std::nextpermutation / 3 - Heap's algorithm non recurrent" << std::endl;
+	std::cin >> labeling_strategy;
+	if (labeling_strategy < 1 || labeling_strategy>3 || (enumeration_strategy==1 && labeling_strategy==1))
+	{
+		std::cout << "Bad input" << std::endl;
+		return 1;
+	}
+	label_type = labeling_strategy;
 
 	std::cout << std::endl << "Loading graph from file" << std::endl;
 	int graphSize = -1;
@@ -376,7 +380,20 @@ int main(int argc, char** argv)
 	double duration;
 
 	start = std::clock();
-	ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
+	switch (enumeration_strategy)
+	{
+	case 1:
+		ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
+		break;
+	case 2:
+		EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
+		break;
+	case 3:
+		EnumerationMulti::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
+		break;
+	default:
+		return 1;
+	}
 	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 	std::cout << "ProcessGraphGPU duration: " << duration << '\n';
@@ -403,7 +420,20 @@ int main(int argc, char** argv)
 			}
 		}
 		//std::cout << std::endl << "Processing graph" << std::endl;
-		EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, counter, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
+		switch (enumeration_strategy)
+		{
+		case 1:
+			ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
+			break;
+		case 2:
+			EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
+			break;
+		case 3:
+			EnumerationMulti::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
+			break;
+		default:
+			return 1;
+		}
 
 		for (int j = 0; j < SUBGRAPH_INDEX_SIZE; j++)
 		{

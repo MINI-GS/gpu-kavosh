@@ -57,7 +57,8 @@ namespace EnumerationCPU
 		bool* visitedInCurrentSearch,
 		bool* graph,
 		int graphSize,
-		std::atomic<int>* counter);
+		std::atomic<int>* counter,
+		int label_type);
 	
 
 	void EnumerateGPU(
@@ -70,7 +71,8 @@ namespace EnumerationCPU
 		int graphSize,
 		std::atomic<int>* counter,
 		int tid,
-		int offset
+		int offset,
+		int label_type
 	);
 	
 

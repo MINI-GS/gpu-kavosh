@@ -4,5 +4,5 @@
 
 namespace EnumerationMulti
 {
-	void ProcessGraphThreading(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize);
+	void ProcessGraph(bool* graph, int graphSize, int* counter, int counterSize, int subgraphSize, int label_type);
 }

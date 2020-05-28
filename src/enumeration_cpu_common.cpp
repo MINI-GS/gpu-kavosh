@@ -59,7 +59,7 @@ void EnumerationCPU::Label2(bool* graph, int n, bool* label)
 	} while (NextPermutation(0, n, vertex_label));
 }
 
-void EnumerationCPU::Enumerate(int root, int level, int remaining, int subgraphSize, int* searchTree, int searchTreeRowSize, bool* chosenInTree, bool* visitedInCurrentSearch, bool* graph, int graphSize, std::atomic<int>* counter)
+void EnumerationCPU::Enumerate(int root, int level, int remaining, int subgraphSize, int* searchTree, int searchTreeRowSize, bool* chosenInTree, bool* visitedInCurrentSearch, bool* graph, int graphSize, std::atomic<int>* counter, int label_type)
 {
 	if (remaining == 0)
 	{
@@ -91,7 +91,21 @@ void EnumerationCPU::Enumerate(int root, int level, int remaining, int subgraphS
 		}
 		uint largest = 0;
 
-		Label1(subgraph, subgraphSize, label);
+		switch (label_type)
+		{
+		case 1:
+			Label1(subgraph, subgraphSize, label);
+			break;
+		case 2:
+			Label2(subgraph, subgraphSize, label);
+			break;
+		case 3:
+			Label3(subgraph, subgraphSize, label);
+			break;
+		default:
+			break;
+		}
+		
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
 				largest += 1 << ((i / MAX_SUBGRAPH_SIZE) * subgraphSize + i % MAX_SUBGRAPH_SIZE);
@@ -150,7 +164,8 @@ void EnumerationCPU::Enumerate(int root, int level, int remaining, int subgraphS
 				visitedInCurrentSearch,
 				graph,
 				graphSize,
-				counter);
+				counter,
+				label_type);
 
 			for (int a = 0; a < noNodesOnCurrentLevel; ++a)
 			{
@@ -168,7 +183,7 @@ void EnumerationCPU::Enumerate(int root, int level, int remaining, int subgraphS
 	}
 }
 
-void EnumerationCPU::EnumerateGPU(int subgraphSize, int* searchTree, int searchTreeSize, bool* chosenInTree, bool* visitedInCurrentSearch, bool* graph, int graphSize, std::atomic<int>* counter, int tid, int offset)
+void EnumerationCPU::EnumerateGPU(int subgraphSize, int* searchTree, int searchTreeSize, bool* chosenInTree, bool* visitedInCurrentSearch, bool* graph, int graphSize, std::atomic<int>* counter, int tid, int offset, int label_type)
 {
 	if (tid < graphSize)
 	{
@@ -191,7 +206,8 @@ void EnumerationCPU::EnumerateGPU(int subgraphSize, int* searchTree, int searchT
 			visitedInCurrentSearchRoot,
 			graph,
 			graphSize,
-			counter);
+			counter,
+			label_type);
 	}
 
 }
