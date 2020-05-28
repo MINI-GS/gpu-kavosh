@@ -78,6 +78,13 @@ __host__ __device__ void Label1(bool* graph, int n, bool* label)
 	return void();
 }
 
+/// following code is based on std::nextpermutation
+/// posible implememtation from cppreference
+/// true if the function could rearrange the
+/// object as a lexicographicaly greater permutation.
+/// Otherwise, the function returns false to indicate
+/// that the arrangement is not greater than the previous,
+/// but the lowest possible(sorted in ascending order).
 __host__ __device__ void Label2(bool* graph, int n, bool* label)
 {
 	int vertex_label[MAX_SUBGRAPH_SIZE];
