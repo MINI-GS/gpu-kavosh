@@ -240,7 +240,7 @@ void Enumerate(
 	{
 		if (searchTree[level * searchTreeRowSize + 0] < k)
 		{
-			return;
+			break;
 		}
 
 		int noNodesOnCurrentLevel = searchTree[level * searchTreeRowSize];
@@ -352,7 +352,7 @@ void ProcessGraphThreading(bool* graph, int graphSize, int* counter, int counter
 	const int noBlocksPerRun = 4;
 	const int noThreadsPerBlock = 64;
 	const int noThreadsPerRun = noBlocksPerRun * noThreadsPerBlock;
-	int searchTreeRowSize = GetMaxDeg(graph,graphSize) * (subgraphSize - 2);
+	int searchTreeRowSize = 1 + GetMaxDeg(graph,graphSize) * (subgraphSize - 2);
 
 
 	// TODO add errorchecking on allocation
@@ -479,14 +479,20 @@ int main(int argc, char** argv)
 	std::cout << std::endl << "Generating random graphs" << std::endl;
 	for (int i = 0; i < RANDOM_GRAPH_NUMBER; i++)
 	{
+		for (int i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
+		{
+			counter[i] = 0;
+		}
 		std::cout << ".";
 		//std::cout << std::endl << "Generating random graph " << i << std::endl;
 		GenerateGraph(graph, graphSize);
-		for (int i = 0; i < graphSize; ++i)
+
+
+		for (int a = 0; a < graphSize; ++a)
 		{
-			for (int j = 0; j < graphSize; ++j)
+			for (int b = 0; b < graphSize; ++b)
 			{
-				graph_one_dim[i * graphSize + j] = graph[i][j];
+				graph_one_dim[a * graphSize + b] = graph[a][b];
 			}
 		}
 		ProcessGraphThreading(graph_one_dim, graphSize, counter, SUBGRAPH_INDEX_SIZE);
