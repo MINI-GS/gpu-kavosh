@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cstdio>
 #include <ctime>
+#include <sstream>
 
 #include <cuda_runtime.h>
 #include <cuda_profiler_api.h>
@@ -24,6 +25,10 @@
 #include "enumeration_cpu_single.h"
 
 #include <map>
+
+
+////////////////////////////////////////////////////////////////////////////////
+// GPU
 
 
 #define uint unsigned int
@@ -45,9 +50,9 @@ __host__ __device__ void InitChildSet(
 	int graphSize)
 {
 	searchTree[level * searchTreeRowSize + 0] = 0;
-	for (int i = 1; i <= searchTree[(level - 1) *searchTreeRowSize + 0]; ++i)
+	for (int i = 1; i <= searchTree[(level - 1) * searchTreeRowSize + 0]; ++i)
 	{
-		if (chosenInTree[searchTree[(level - 1) *searchTreeRowSize + i]])
+		if (chosenInTree[searchTree[(level - 1) * searchTreeRowSize + i]])
 		{
 			int parent = searchTree[(level - 1) * searchTreeRowSize + i];
 
@@ -113,10 +118,14 @@ __device__ void Enumerate(
 		}
 		uint largest = 0;
 
-		if(label_type==2)
+		if (label_type == 2)
+		{
 			Label2(subgraph, subgraphSize, label);
+		}
 		else
+		{
 			Label3(subgraph, subgraphSize, label);
+		}
 
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
@@ -162,7 +171,7 @@ __device__ void Enumerate(
 		{
 			for (int i = 0; i < noNodesOnCurrentLevel; ++i)
 			{
-				if (permutation[i]) chosenInTree[searchTree[level*searchTreeRowSize +  i + 1]] = true;
+				if (permutation[i]) chosenInTree[searchTree[level * searchTreeRowSize + i + 1]] = true;
 			}
 
 			Enumerate(
@@ -180,7 +189,7 @@ __device__ void Enumerate(
 
 			for (int a = 0; a < noNodesOnCurrentLevel; ++a)
 			{
-				chosenInTree[searchTree[level*searchTreeRowSize + a + 1]] = false;
+				chosenInTree[searchTree[level * searchTreeRowSize + a + 1]] = false;
 			}
 		} while (NextPermutation(0, noNodesOnCurrentLevel, permutation));
 
@@ -217,7 +226,7 @@ __global__ void EnumerateGPU(
 		searchTreeRoot[1] = tid;
 		chosenInTreeRoot[tid] = true;
 		visitedInCurrentSearchRoot[tid] = true;
-			
+
 		Enumerate(
 			tid + offset,
 			1,
@@ -255,7 +264,7 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 	const int noBlocksPerRun = 4;
 	const int noThreadsPerBlock = 64;
 	const int noThreadsPerRun = noBlocksPerRun * noThreadsPerBlock;
-	int searchTreeRowSize = GetMaxDeg(graph,graphSize) * (subgraphSize - 2);
+	int searchTreeRowSize = GetMaxDeg(graph, graphSize) * (subgraphSize - 2);
 
 	// TODO add errorchecking on allocation
 
@@ -294,7 +303,7 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 	// TODO start on more threads (one should add more memory)
 	//     and process all vertices (as a root)
 	printf("Lauching kernel\n");
-	EnumerateGPU<<<noBlocksPerRun,noThreadsPerBlock>>>(
+	EnumerateGPU << <noBlocksPerRun, noThreadsPerBlock >> > (
 		subgraphSize,
 		searchTree_d,
 		searchTreeRowSize,
@@ -312,7 +321,7 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 		fprintf(stderr, "kernellAssert: %s\n", cudaGetErrorString(code));
 		if (abort) exit(code);
 	}
-	
+
 	printf("Copying couter to host\n");
 	cudaMemcpy(counter, counter_d, counterSize * sizeof(int), cudaMemcpyDeviceToHost);
 
@@ -326,8 +335,79 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 	printf("\n");
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// INPUT
+
+int ParseArgsFromConsole(int& enumeration_strategy, int& labeling_strategy, int& max_input_graph_id, int& number_of_generated_graphs)
+{
+	std::cout << "Choose enumeration strategy" << std::endl <<
+		"1 - GPU / 2 - CPU one thread / 3 - CPU multithreading" << std::endl;
+	std::cin >> enumeration_strategy;
+
+	std::cout << "Choose labeling strategy" << std::endl;
+	if (enumeration_strategy != 1)
+		std::cout << "1 - Heap's algorithm recurrent / ";
+	std::cout << "2 - algorithm based on std::nextpermutation / 3 - Heap's algorithm non recurrent" << std::endl;
+	std::cin >> labeling_strategy;
+
+	cudaMemcpyToSymbol(label_type, &labeling_strategy, sizeof(int), 0, cudaMemcpyHostToDevice);
+
+	std::cout << "How much do you want to reduce the input graph? Pass nuber equal to max allowed vertex number from input graph. If want to use unreduced graph pass -1. " << std::endl;
+	std::cin >> max_input_graph_id;
+
+	std::cout << "How many random graphs do you want to generate?" << std::endl;
+	std::cin >> number_of_generated_graphs;
+
+	return 0;
+}
+
+int ParseInt(char* c_s, int& result)
+{
+	std::istringstream ss(c_s);
+	int tmp;
+	if (!(ss >> tmp)) {
+		std::cerr << "Invalid number: " << c_s[1] << '\n';
+		return 1;
+	}
+	else if (!ss.eof()) {
+		std::cerr << "Trailing characters after number: " << c_s[1] << '\n';
+		return 1;
+	}
+	result = tmp;
+	return 0;
+}
+
+int ParseArgs(int argc, char** argv,
+	int& enumeration_strategy, int& labeling_strategy, int& max_input_graph_id, int& number_of_generated_graphs)
+{
+	if (ParseInt(argv[1], enumeration_strategy))
+		return 1;
+	if (ParseInt(argv[2], labeling_strategy))
+		return 1;
+	if (ParseInt(argv[3], max_input_graph_id))
+		return 1;
+	if (ParseInt(argv[4], number_of_generated_graphs))
+		return 1;
+	return 0;
+}
+
+int ValidateArgs(int enumeration_strategy, int labeling_strategy)
+{
+	if (enumeration_strategy < 1 || enumeration_strategy>3)
+	{
+		std::cout << "Bad input" << std::endl;
+		return 1;
+	}
+	if (labeling_strategy < 1 || labeling_strategy>3 || (enumeration_strategy == 1 && labeling_strategy == 1))
+	{
+		std::cout << "Bad input" << std::endl;
+		return 1;
+	}
+	return 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////
+// MAIN
 
 int main(int argc, char** argv)
 {
@@ -343,32 +423,19 @@ int main(int argc, char** argv)
 	int labeling_strategy = 0;
 	int max_input_graph_id = -1;
 	int number_of_generated_graphs = 0;
-	std::cout << "Choose enumeration strategy" << std::endl <<
-		"1 - GPU / 2 - CPU one thread / 3 - CPU multithreading" << std::endl;
-	std::cin >> enumeration_strategy;
-	if (enumeration_strategy < 1 || enumeration_strategy>3)
+
+	if (argc == 5)
 	{
-		std::cout << "Bad input" << std::endl;
-		return 1;
+		if (ParseArgs(argc, argv, enumeration_strategy, labeling_strategy, max_input_graph_id, number_of_generated_graphs))
+			return 1;
 	}
-
-	std::cout << "Choose labeling strategy" << std::endl;
-	if (enumeration_strategy != 1)
-		std::cout << "1 - Heap's algorithm recurrent / ";
-	std::cout << "2 - algorithm based on std::nextpermutation / 3 - Heap's algorithm non recurrent" << std::endl;
-	std::cin >> labeling_strategy;
-	if (labeling_strategy < 1 || labeling_strategy>3 || (enumeration_strategy==1 && labeling_strategy==1))
+	else
 	{
-		std::cout << "Bad input" << std::endl;
-		return 1;
+		if (ParseArgsFromConsole(enumeration_strategy, labeling_strategy, max_input_graph_id, number_of_generated_graphs))
+			return 1;
 	}
-	label_type = labeling_strategy;
-
-	std::cout << "How much do you want to reduce the input graph? Pass nuber equal to max allowed vertex number from input graph. If want to use unreduced graph pass -1. " << std::endl;
-	std::cin >> max_input_graph_id;
-
-	std::cout << "How many random graphs do you want to generate?" << std::endl;
-	std::cin >> number_of_generated_graphs;
+	if (ValidateArgs(enumeration_strategy, labeling_strategy))
+		return 1;
 
 	std::cout << std::endl << "Loading graph from files data/allActors.csv (vertices) and data/allActorsRelation.csv (edges)" << std::endl;
 	int graphSize = -1;
@@ -405,7 +472,7 @@ int main(int argc, char** argv)
 	}
 	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
-	std::cout << "ProcessGraphGPU duration: " << duration << '\n';
+	std::cout << "ProcessGraph duration: " << duration << std::endl << std::endl;
 	std::cout << "graphID\tcount" << std::endl;
 	for (uint i = 0; i < SUBGRAPH_INDEX_SIZE; ++i)
 	{
@@ -432,13 +499,13 @@ int main(int argc, char** argv)
 		switch (enumeration_strategy)
 		{
 		case 1:
-			ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
+			ProcessGraphGPU(graph_one_dim, graphSize, counter, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
 			break;
 		case 2:
-			EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
+			EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, counter, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
 			break;
 		case 3:
-			EnumerationMulti::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
+			EnumerationMulti::ProcessGraph(graph_one_dim, graphSize, counter, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE, labeling_strategy);
 			break;
 		default:
 			return 1;
