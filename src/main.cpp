@@ -240,7 +240,7 @@ __device__ void Enumerate(
 	{
 		if (searchTree[level * searchTreeRowSize + 0] < k)
 		{
-			return;
+			break;
 		}
 
 		int noNodesOnCurrentLevel = searchTree[level * searchTreeRowSize];
@@ -300,7 +300,8 @@ __global__ void EnumerateGPU(
 	bool* visitedInCurrentSearch,
 	bool* graph,
 	int graphSize,
-	int* counter
+	int* counter,
+	int offset
 )
 {
 	extern __shared__ bool graph_shared[];
@@ -321,7 +322,7 @@ __global__ void EnumerateGPU(
 		visitedInCurrentSearchRoot[tid] = true;
 			
 		Enumerate(
-			tid,
+			tid + offset,
 			1,
 			subgraphSize - 1,
 			subgraphSize,
@@ -404,7 +405,8 @@ void ProcessGraphGPU(bool* graph, int graphSize, int* counter, int counterSize, 
 		visitedInCurrentSearch_d,
 		graph_d,
 		graphSize,
-		counter_d);
+		counter_d,
+		0);
 	cudaDeviceSynchronize();
 	cudaError_t code = cudaGetLastError();
 
