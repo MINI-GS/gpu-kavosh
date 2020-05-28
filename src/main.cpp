@@ -44,25 +44,6 @@ __device__ void Enumerate(
 	int graphSize,
 	int* counter);
 
-template<class T>
-__host__ __device__ void swap(int i, int j, T* tab)
-{
-	T temp = tab[i];
-	tab[i] = tab[j];
-	tab[j] = temp;
-}
-
-template<class T>
-__host__ __device__ void reverse(int i, int j, T* tab)
-{
-	--j;
-	while (i < j)
-	{
-		swap(i, j, tab);
-		++i;
-		--j;
-	}
-}
 
 
 /// following code is based on std::nextpermutation
@@ -72,39 +53,7 @@ __host__ __device__ void reverse(int i, int j, T* tab)
 /// Otherwise, the function returns false to indicate
 /// that the arrangement is not greater than the previous,
 /// but the lowest possible(sorted in ascending order).
-template<class T>
-__host__ __device__ bool NextPermutation(int first, int last, T* tab)
-{
-	if (first == last)
-		return false;
-	int i = first;
-	++i;
-	if (i == last)
-		return false;
-	i = last;
-	--i;
 
-	for (;;)
-	{
-		int ii = i;
-		--i;
-		if (tab[i] < tab[ii])
-		{
-			int j = last;
-			while (!(tab[i] < tab[--j]))
-			{
-			}
-			swap(i, j, tab);
-			reverse(ii, last, tab);
-			return true;
-		}
-		if (i == first)
-		{
-			reverse(first, last, tab);
-			return false;
-		}
-	}
-}
 
 __host__ __device__ void InitChildSet(
 	int root,
@@ -139,39 +88,7 @@ __host__ __device__ void InitChildSet(
 	}
 }
 
-__host__ __device__ void Label2(bool* graph, int n, bool* label)
-{
-	int vertex_label[MAX_SUBGRAPH_SIZE];
-	for (int i = 0; i < n; i++)
-		vertex_label[i] = i;
 
-	do
-	{
-		int result = 0; // 0 - continue, 1 - current is beter, 2 - current is worse
-		for (int i = 0; (i < n) && !result; i++)
-			for (int j = 0; (j < n) && !result; j++)
-			{
-				// if current permutation is better
-				if (get_edge(vertex_label[i], vertex_label[j], graph) && !get_edge(i, j, label))
-					result = 1;
-				else if (!get_edge(vertex_label[i], vertex_label[j], graph) && get_edge(i, j, label))
-					result = 2;
-			}
-
-		// if current is not better
-		if (result != 1)
-			continue;
-
-		// save current
-		for (int i = 0; (i < n); i++)
-			for (int j = 0; (j < n); j++)
-			{
-				bool edge_value = get_edge(vertex_label[i], vertex_label[j], graph);
-				set_edge(i, j, label, edge_value);
-			}
-
-	} while (NextPermutation(0, n, vertex_label));
-}
 
 
 __device__ void Enumerate(
@@ -459,7 +376,7 @@ int main(int argc, char** argv)
 	double duration;
 
 	start = std::clock();
-	EnumerationSingle::ProcessGraph(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
+	ProcessGraphGPU(graph_one_dim, graphSize, count_master, SUBGRAPH_INDEX_SIZE, SUBGRAPH_SIZE);
 	duration = (std::clock() - start) / (double)CLOCKS_PER_SEC;
 
 	std::cout << "ProcessGraphGPU duration: " << duration << '\n';

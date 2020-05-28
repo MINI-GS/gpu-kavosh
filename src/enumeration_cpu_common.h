@@ -31,68 +31,6 @@
 
 namespace EnumerationCPU
 {
-	template<class T>
-	void swap(int i, int j, T* tab)
-	{
-		T temp = tab[i];
-		tab[i] = tab[j];
-		tab[j] = temp;
-	}
-
-	template<class T>
-	void reverse(int i, int j, T* tab)
-	{
-		--j;
-		while (i < j)
-		{
-			swap(i, j, tab);
-			++i;
-			--j;
-		}
-	}
-
-
-	/// following code is based on std::nextpermutation
-	/// posible implememtation from cppreference
-	/// true if the function could rearrange the
-	/// object as a lexicographicaly greater permutation.
-	/// Otherwise, the function returns false to indicate
-	/// that the arrangement is not greater than the previous,
-	/// but the lowest possible(sorted in ascending order).
-	template<class T>
-	bool NextPermutation(int first, int last, T* tab)
-	{
-		if (first == last)
-			return false;
-		int i = first;
-		++i;
-		if (i == last)
-			return false;
-		i = last;
-		--i;
-
-		for (;;)
-		{
-			int ii = i;
-			--i;
-			if (tab[i] < tab[ii])
-			{
-				int j = last;
-				while (!(tab[i] < tab[--j]))
-				{
-				}
-				swap(i, j, tab);
-				reverse(ii, last, tab);
-				return true;
-			}
-			if (i == first)
-			{
-				reverse(first, last, tab);
-				return false;
-			}
-		}
-	}
-
 	void InitChildSet(
 		int root,
 		int level,

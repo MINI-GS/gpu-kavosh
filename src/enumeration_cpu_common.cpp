@@ -91,7 +91,7 @@ void EnumerationCPU::Enumerate(int root, int level, int remaining, int subgraphS
 		}
 		uint largest = 0;
 
-		Label(subgraph, subgraphSize, label);
+		Label1(subgraph, subgraphSize, label);
 		for (int i = 0; i < MAX_SUBGRAPH_SIZE_SQUARED; i++)
 			if (label[i])
 				largest += 1 << ((i / MAX_SUBGRAPH_SIZE) * subgraphSize + i % MAX_SUBGRAPH_SIZE);

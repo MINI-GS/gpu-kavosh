@@ -16,7 +16,7 @@ __host__ __device__  void set_edge(int vertex1, int vertex2, bool* graph, bool v
 }
 
 
- __host__ __device__ void permute(int* vertex_label, bool* graph, bool* label, int l, int r)
+ __host__ __device__ void permute1(int* vertex_label, bool* graph, bool* label, int l, int r)
 {
 	// end of heap
 	if (l == r)
@@ -57,7 +57,7 @@ __host__ __device__  void set_edge(int vertex1, int vertex2, bool* graph, bool v
 		vertex_label[i] = tmp;
 
 		// Recursion called  
-		permute(vertex_label, graph, label, l + 1, r);
+		permute1(vertex_label, graph, label, l + 1, r);
 
 		// Backtrack  
 		tmp = vertex_label[l];
@@ -66,16 +66,50 @@ __host__ __device__  void set_edge(int vertex1, int vertex2, bool* graph, bool v
 	}
 }
 
-__host__ __device__ void Label(bool* graph, int n, bool* label)
+__host__ __device__ void Label1(bool* graph, int n, bool* label)
 {
 	//assert SUBGRAPH_SIZE == n
 
 	int vertex_label[SUBGRAPH_SIZE];
 	for (int i = 0; i < SUBGRAPH_SIZE; i++)
 		vertex_label[i] = i;
-	permute(vertex_label, graph, label, 0, n - 1);
+	permute1(vertex_label, graph, label, 0, n - 1);
 
 	return void();
+}
+
+__host__ __device__ void Label2(bool* graph, int n, bool* label)
+{
+	int vertex_label[MAX_SUBGRAPH_SIZE];
+	for (int i = 0; i < n; i++)
+		vertex_label[i] = i;
+
+	do
+	{
+		int result = 0; // 0 - continue, 1 - current is beter, 2 - current is worse
+		for (int i = 0; (i < n) && !result; i++)
+			for (int j = 0; (j < n) && !result; j++)
+			{
+				// if current permutation is better
+				if (get_edge(vertex_label[i], vertex_label[j], graph) && !get_edge(i, j, label))
+					result = 1;
+				else if (!get_edge(vertex_label[i], vertex_label[j], graph) && get_edge(i, j, label))
+					result = 2;
+			}
+
+		// if current is not better
+		if (result != 1)
+			continue;
+
+		// save current
+		for (int i = 0; (i < n); i++)
+			for (int j = 0; (j < n); j++)
+			{
+				bool edge_value = get_edge(vertex_label[i], vertex_label[j], graph);
+				set_edge(i, j, label, edge_value);
+			}
+
+	} while (NextPermutation(0, n, vertex_label));
 }
 
 
