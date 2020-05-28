@@ -83,7 +83,7 @@ bool** Load(int* n, std::string filename_v, std::string filename_e, int idex)
 		//std::cout << code << std::endl;
 
 		int id = std::stoi(code);
-		if (id < max_id)
+		if (id < max_id || max_id<0)
 		{
 			ids[id] = vertice_count;
 			vertice_count++;
@@ -110,7 +110,7 @@ bool** Load(int* n, std::string filename_v, std::string filename_e, int idex)
 		code = line.substr(0, line.find(";"));
 		int id2 = std::stoi(code);
 
-		if (id1 < max_id && id2 < max_id)
+		if ((id1 < max_id && id2 < max_id) || max_id<0)
 		{
 			id1 = ids[id1];
 			id2 = ids[id2];

@@ -341,6 +341,8 @@ int main(int argc, char** argv)
 
 	int enumeration_strategy = 0;
 	int labeling_strategy = 0;
+	int max_input_graph_id = -1;
+	int number_of_generated_graphs = 0;
 	std::cout << "Choose enumeration strategy" << std::endl <<
 		"1 - GPU / 2 - CPU one thread / 3 - CPU multithreading" << std::endl;
 	std::cin >> enumeration_strategy;
@@ -349,6 +351,7 @@ int main(int argc, char** argv)
 		std::cout << "Bad input" << std::endl;
 		return 1;
 	}
+
 	std::cout << "Choose labeling strategy" << std::endl;
 	if (enumeration_strategy != 1)
 		std::cout << "1 - Heap's algorithm recurrent / ";
@@ -361,9 +364,15 @@ int main(int argc, char** argv)
 	}
 	label_type = labeling_strategy;
 
-	std::cout << std::endl << "Loading graph from file" << std::endl;
+	std::cout << "How much do you want to reduce the input graph? Pass nuber equal to max allowed vertex number from input graph. If want to use unreduced graph pass -1. " << std::endl;
+	std::cin >> max_input_graph_id;
+
+	std::cout << "How many random graphs do you want to generate?" << std::endl;
+	std::cin >> number_of_generated_graphs;
+
+	std::cout << std::endl << "Loading graph from files data/allActors.csv (vertices) and data/allActorsRelation.csv (edges)" << std::endl;
 	int graphSize = -1;
-	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv", 500);
+	bool** graph = Load(&graphSize, "data/allActors.csv", "data/allActorsRelation.csv", max_input_graph_id);
 
 	// TODO change loader so that it returns one dim array
 	bool* graph_one_dim = new bool[graphSize * graphSize];
@@ -407,7 +416,7 @@ int main(int argc, char** argv)
 	}
 
 	std::cout << std::endl << "Generating random graphs" << std::endl;
-	for (int i = 0; i < RANDOM_GRAPH_NUMBER; i++)
+	for (int i = 0; i < number_of_generated_graphs; i++)
 	{
 		std::cout << ".";
 		//std::cout << std::endl << "Generating random graph " << i << std::endl;
@@ -449,8 +458,8 @@ int main(int argc, char** argv)
 
 	for (int i = 0; i < SUBGRAPH_INDEX_SIZE; i++)
 	{
-		mean[i] = mean[i] / (double)RANDOM_GRAPH_NUMBER;
-		var[i] = sqrt((var[i] - ((double)RANDOM_GRAPH_NUMBER * (mean[i] * mean[i]))) / (double)RANDOM_GRAPH_NUMBER);
+		mean[i] = mean[i] / (double)number_of_generated_graphs;
+		var[i] = sqrt((var[i] - ((double)number_of_generated_graphs * (mean[i] * mean[i]))) / (double)number_of_generated_graphs);
 
 		if (var[i] != 0)
 			score[i] = (count_master[i] - mean[i]) / var[i];
