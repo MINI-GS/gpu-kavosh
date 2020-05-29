@@ -7,6 +7,9 @@
     <Filter Include="header">
       <UniqueIdentifier>{867ce742-140a-4a3e-9e7e-01de9512c44c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="enumeration">
+      <UniqueIdentifier>{45ca59a5-aaf8-48ef-8837-1110e7340603}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="src\main.cpp">
@@ -29,6 +32,15 @@
     <ClInclude Include="src\random_graph.h">
       <Filter>header</Filter>
     </ClInclude>
+    <ClInclude Include="src\enumeration_cpu_common.h">
+      <Filter>enumeration</Filter>
+    </ClInclude>
+    <ClInclude Include="src\enumeration_cpu_multi.h">
+      <Filter>enumeration</Filter>
+    </ClInclude>
+    <ClInclude Include="src\enumeration_cpu_single.h">
+      <Filter>enumeration</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\loader.cpp">
@@ -37,5 +49,17 @@
     <ClCompile Include="src\random_graph.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="src\enumeration_cpu_multi.cpp">
+      <Filter>enumeration</Filter>
+    </ClCompile>
+    <ClCompile Include="src\enumeration_cpu_single.cpp">
+      <Filter>enumeration</Filter>
+    </ClCompile>
+    <ClCompile Include="src\enumeration_cpu_common.cpp">
+      <Filter>enumeration</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="results.txt" />
   </ItemGroup>
 </Project>
